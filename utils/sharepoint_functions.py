@@ -7,6 +7,30 @@ from .data_metrics import *
 dataMetrics = DataMetrics()
 
 
+def get_sharepoint_digest(cookies, site_url, logger):
+    # URL da API para obter o valor do Digest Value
+    api_url = f"{site_url}/_api/contextinfo"
+
+    # Cabeçalhos para a requisição POST
+    headers = {
+        "accept": "application/json;odata=verbose",
+    }
+
+    # Realizando a requisição POST
+    response = requests.post(api_url, headers=headers, cookies=cookies)
+    logger.debug(response)
+
+    # Verificando a resposta
+    if response.status_code == 200:
+        digest_value = response.json(
+        )["d"]["GetContextWebInformation"]["FormDigestValue"]
+        logger.debug(f"Digest Value: {digest_value}")
+        return digest_value
+    else:
+        raise requests.exceptions.HTTPError(
+            f"Falha ao obter Digest Value. {response.status_code}", response=response)
+
+
 def update_sharepoint_list_item_field2(item_id, update_field_name, update_field_value, connection):
     if not str(item_id).isdigit():
         raise Exception(
@@ -46,11 +70,12 @@ def update_sharepoint_list_item_field2(item_id, update_field_name, update_field_
 
 
 def update_aux_filter_value(p_id, p_token, connection):
-    if p_id == -1:
+    if p_id != -1:
         try:
             max_retries = 5
             for retry in range(1, max_retries + 1):
                 try:
+                    connection.get_sharepoint_digest()
                     update_sharepoint_list_item_field2(item_id=p_id, update_field_name='aux_filter_data',
                                                        update_field_value=p_token, connection=connection)
                     break
@@ -71,7 +96,81 @@ def update_aux_filter_value(p_id, p_token, connection):
                             return
                     else:
                         connection.logger.error(
-                            f"Falha ao criar item. Erro {status_code}.")
+                            f"Falha ao Atualizar item. Erro {status_code}.")
+                        connection.logger.error(err)
+                        return
+        except Exception as err:
+            connection.logger.error(err)
+            return
+        connection.logger.info("Campo atualizado com sucesso.")
+
+
+def update_email_ponto_focal(p_id, p_token, connection):
+    if p_id != -1:
+        try:
+            max_retries = 5
+            for retry in range(1, max_retries + 1):
+                try:
+                    connection.get_sharepoint_digest()
+                    update_sharepoint_list_item_field2(item_id=p_id,
+                                                       update_field_name='PontoFocaldaMigra_x00e7__x00e3_o',
+                                                       update_field_value=p_token, connection=connection)
+                    break
+                except requests.exceptions.HTTPError as err:
+                    status_code = err.response.status_code
+                    if status_code == 503 or status_code == 403:
+                        connection.logger.error(
+                            f"Falha ao atualizar o campo. Erro {status_code}.")
+                        connection.logger.error(err)
+                        if retry < max_retries:
+                            connection.logger.debug(
+                                f"Tentativa {retry} de {max_retries}...")
+                            connection.get_sharepoint_digest()
+                        else:
+                            connection.logger.error(
+                                f"Máximo de tentativas alcançadas. Falha ao atualizar o campo. Erro {status_code}."
+                            )
+                            return
+                    else:
+                        connection.logger.error(
+                            f"Falha ao Atualizar item. Erro {status_code}.")
+                        connection.logger.error(err)
+                        return
+        except Exception as err:
+            connection.logger.error(err)
+            return
+        connection.logger.info("Campo atualizado com sucesso.")
+
+
+def update_acao_apos_revisao(p_id, p_token, connection):
+    if p_id != -1:
+        try:
+            max_retries = 5
+            for retry in range(1, max_retries + 1):
+                try:
+                    connection.get_sharepoint_digest()
+                    update_sharepoint_list_item_field2(item_id=p_id,
+                                                       update_field_name='A_x00e7__x00e3_oap_x00f3_sRevis_',
+                                                       update_field_value=p_token, connection=connection)
+                    break
+                except requests.exceptions.HTTPError as err:
+                    status_code = err.response.status_code
+                    if status_code == 503 or status_code == 403:
+                        connection.logger.error(
+                            f"Falha ao atualizar o campo. Erro {status_code}.")
+                        connection.logger.error(err)
+                        if retry < max_retries:
+                            connection.logger.debug(
+                                f"Tentativa {retry} de {max_retries}...")
+                            connection.get_sharepoint_digest()
+                        else:
+                            connection.logger.error(
+                                f"Máximo de tentativas alcançadas. Falha ao atualizar o campo. Erro {status_code}."
+                            )
+                            return
+                    else:
+                        connection.logger.error(
+                            f"Falha ao Atualizar item. Erro {status_code}.")
                         connection.logger.error(err)
                         return
         except Exception as err:
@@ -113,14 +212,26 @@ def check_b2b_filter(url_value, item, connection):
             # update_aux_filter_value(aux_id, 'HUB_PAGAMENTO', connection)
 
 
-def check_loja_online_filter(url_value, item, connection):
+def check_loja_online_filter(url_value, item, df_loja, connection):
     aux_id = item.get('ID')
     validado = item.get('VALIDADO')
-    if re.search('https://gitlab.redecorp.br/LojaOnline', url_value):
+
+    if url_value in df_loja['URL_GIT'].unique():
         dataMetrics.all_loja_online.append(item)
         if validado:
             dataMetrics.all_loja_online_done.append(item)
-        # update_aux_filter_value(aux_id, 'HUB_PAGAMENTO', connection)
+
+        i = df_loja[df_loja['URL_GIT'] == url_value]
+        v_acao = i.get('ACAO').to_string()
+        if re.search('MIGRAR', v_acao):
+            v_acao = 'Migrar'
+        elif re.search('SANITIZAR', v_acao):
+            v_acao = 'Sanitizar'
+
+        update_email_ponto_focal(aux_id, 'lucas.pereira@telefonica.com', connection)
+        update_acao_apos_revisao(aux_id, v_acao, connection)
+        # update_aux_filter_value(aux_id, 'LOJA_ONLINE_B2C', connection)
+
 
 
 def check_integracao_dip_filter(url_value, item, connection):
@@ -231,7 +342,14 @@ def get_all_sharepoint_list_items(connection):
         "X-RequestDigest": connection.digest_header
     }
 
-    validado = False
+    df_lojaonline = pd.read_csv('c:/Temp/repositorios_loja_online_b2c.CSV')
+    col_found = []
+    tam = len(df_lojaonline)
+    for i in range(tam):
+        col_found.append('False')
+    df_lojaonline['FOUND'] = col_found
+    df_lojaonline.to_csv('c:/Temp/loja_log1.csv')
+    tam = len(dataMetrics.all_loja_online)
     count = 0
     while True:
         response = requests.get(api_url, cookies=connection.cookies, headers=headers)
@@ -256,7 +374,7 @@ def get_all_sharepoint_list_items(connection):
                 check_integracao_dip_filter(url_value, item, connection)
                 check_hub_pagamentos_filter(url_value, item, connection)
                 check_b2b_filter(url_value, item, connection)
-                check_loja_online_filter(url_value, item, connection)
+                check_loja_online_filter(url_value, item, df_lojaonline, connection)
             connection.logger.info(f"{count} itens processados.")
 
             # Check if more items are available
@@ -273,7 +391,16 @@ def get_all_sharepoint_list_items(connection):
     export_csv_integracao_dip_filter(connection)
     generate_csv_file('c:/Temp/validados.csv', dataMetrics.all_items_validados)
     generate_csv_file('c:/Temp/not_validados.csv', dataMetrics.all_items_not_validados)
-
+    df_all_l = pd.DataFrame(dataMetrics.all_loja_online)
+    list_not_in = []
+    list_all = df_lojaonline['URL_GIT'].tolist()
+    for item in list_all:
+        if item in df_all_l['UrldoGIT'].unique():
+            print("Achou" + item)
+        else:
+            list_not_in.append(item)
+    aux_df = pd.DataFrame(list_not_in)
+    aux_df.to_csv('c:/Temp/loja_not_found.csv')
     return dataMetrics.all_items
 
 
