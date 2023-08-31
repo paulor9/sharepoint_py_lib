@@ -8,7 +8,7 @@ from utils import connection as conn
 config = functions.get_config(param.CREDENTIALS_PATH)
 
 # sharepoint_items_file_path = os.path.join(param.DATA_DIR_PATH, 'inventario_devops_itens.csv')
-sharepoint_items_file_path = 'c:\Temp\inventario_devops_itens.csv'
+
 
 
 def read_csv_items(file_path, logger):
@@ -57,11 +57,14 @@ def check_field_blank_values(output_file_path, df_items, field, logger):
 
 
 def main():
+    data_str = datetime.today().strftime('%d_%m_%Y')
+    hora_str = datetime.today().strftime('%H_%M_%S')
+    sharepoint_items_file_path = "c:/vivo/inventario_devops_itens_" + data_str + "_" + hora_str + ".csv"
     logger = logging.getLogger(__name__)
     coloredlogs.install(level='DEBUG', logger=logger)
     connection = conn.Connection(logger)
     generate_sharepoint_list_all_items_csv(sharepoint_items_file_path, connection)
-    # teste_resumo_csv(sharepoint_items_file_path, connection)
+ #  teste_resumo_csv(sharepoint_items_file_path, connection)
 
 
 if __name__ == "__main__":

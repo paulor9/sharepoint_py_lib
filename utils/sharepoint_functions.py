@@ -360,12 +360,21 @@ def check_4p_filter(url_value, item, data_metrics, connection):
     # check_4t_url(url_value, item, data_metrics, connection)
 
 
-def export_csv_integracao_dip_filter(data_metrics, connection):
-    generate_csv_file('c:/Temp/vivo/revisados_integra.csv', data_metrics.data_integra.all_validados)
-    generate_csv_file('c:/Temp/vivo/revisados_b2b.csv', data_metrics.data_b2b.all_validados)
-    generate_csv_file('c:/Temp/vivo/revisados_loja_b2c.csv', data_metrics.data_loja_b2c.all_validados)
-    generate_csv_file('c:/Temp/vivo/revisados_hub_pag.csv', data_metrics.data_hub_pag.all_validados)
-    generate_csv_file('c:/Temp/vivo/revisados_plataforma.csv', data_metrics.data_plataforma.all_validados)
+def export_csv_revisados(data_metrics, connection):
+    data_str = datetime.today().strftime('%d_%m_%Y')
+    hora_str = datetime.today().strftime('%H_%M_%S')
+    path_vivo = "c:/vivo/"
+    file_name = path_vivo + "revisados_integra_" +data_str + "_" + hora_str + ".csv"
+    generate_csv_file(file_name, data_metrics.data_integra.all_validados)
+
+    file_name = path_vivo + "revisados_b2b_" + data_str + "_" + hora_str + ".csv"
+    generate_csv_file(file_name, data_metrics.data_b2b.all_validados)
+    file_name = path_vivo + "revisados_loja_b2c_" + data_str + "_" + hora_str + ".csv"
+    generate_csv_file(file_name, data_metrics.data_loja_b2c.all_validados)
+    file_name = path_vivo + "revisados_hub_pag_" + data_str + "_" + hora_str + ".csv"
+    generate_csv_file(file_name, data_metrics.data_hub_pag.all_validados)
+    file_name = path_vivo + "revisados_plataforma_4P_" + data_str + "_" + hora_str + ".csv"
+    generate_csv_file(file_name, data_metrics.data_plataforma.all_validados)
 
 def get_all_sharepoint_list_items(data_metrics, connection):
     api_url = f"{connection.site_url}/_api/web/lists/getbytitle('{connection.list_name}')/items"
@@ -421,7 +430,7 @@ def get_all_sharepoint_list_items(data_metrics, connection):
                 f"Falha ao recuperar itens. {response.status_code}",
                 response=response)
 
-    export_csv_integracao_dip_filter(data_metrics, connection)
+    export_csv_revisados(data_metrics, connection)
     generate_csv_file('c:/Temp/validados.csv', data_metrics.all_items_validados)
     generate_csv_file('c:/Temp/not_validados.csv', data_metrics.all_items_not_validados)
     # df_all_l = pd.DataFrame(data_metrics.all_loja_online)
@@ -647,7 +656,7 @@ def create_sharepoint_list_item(item, connection):
 
 def teste_resumo_csv(csv_file_path, connection):
     dataMetrics = DataMetrics(connection.logger)
-    dataMetrics.log_resume()
+    dataMetrics.log_resume(False)
 def generate_sharepoint_list_all_items_csv(csv_file_path, connection):
     dataMetrics = DataMetrics(connection.logger)
 
@@ -657,5 +666,5 @@ def generate_sharepoint_list_all_items_csv(csv_file_path, connection):
 
     df_sharepoint.to_csv(csv_file_path)
 
-    connection.logger.debug(f"Os items foram escritos no arquivo {csv_file_path}")
-    dataMetrics.log_resume()
+    connection.logger.debug(csv_file_path + " gerado" )
+    dataMetrics.log_resume(True)
