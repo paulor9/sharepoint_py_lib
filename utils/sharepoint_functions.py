@@ -4,8 +4,6 @@ import re
 from .parameters import *
 from .data_metrics import *
 
-dataMetrics = DataMetrics()
-
 
 def get_sharepoint_digest(cookies, site_url, logger):
     # URL da API para obter o valor do Digest Value
@@ -70,7 +68,7 @@ def update_sharepoint_list_item_field2(item_id, update_field_name, update_field_
 
 
 def update_aux_filter_value(p_id, p_token, connection):
-    if p_id != -1:
+    if p_id == -1:
         try:
             max_retries = 5
             for retry in range(1, max_retries + 1):
@@ -106,7 +104,7 @@ def update_aux_filter_value(p_id, p_token, connection):
 
 
 def update_email_ponto_focal(p_id, p_token, connection):
-    if p_id != -1:
+    if p_id == -1:
         try:
             max_retries = 5
             for retry in range(1, max_retries + 1):
@@ -143,7 +141,7 @@ def update_email_ponto_focal(p_id, p_token, connection):
 
 
 def update_acao_apos_revisao(p_id, p_token, connection):
-    if p_id != -1:
+    if p_id == -1:
         try:
             max_retries = 5
             for retry in range(1, max_retries + 1):
@@ -180,46 +178,80 @@ def update_acao_apos_revisao(p_id, p_token, connection):
 
 
 def generate_csv_file(p_path, p_list):
-    v_df = pd.DataFrame(p_list)
-    v_df.to_csv(p_path,
-                columns=["ID", "Sistema_x0028_AF_x0029_Id", "SistemaGitlab", "DiretoriadoOwner",
-                         "GerenciaSrdoOwner", "Owner", "Linguagem", "Title", "TipodeBuild",
-                         "CIServer", "TipoFerramentaSCM_x0028_Controle",
-                         "DatadeAtualiza_x00e7__x00e3_o", "UrldoGIT", "URLPipeline",
-                         "StatusdaMigra_x00e7__x00e3_o", "Ignorar",
-                         "A_x00e7__x00e3_oap_x00f3_sRevis_", "VALIDADO"])
+    if p_list is not None and len(p_list) > 0:
+        v_df = pd.DataFrame(p_list)
+        v_df.to_csv(p_path,
+                    columns=["ID", "PontoFocaldaMigra_x00e7__x00e3_o", "A_x00e7__x00e3_oap_x00f3_sRevis_", "VALIDADO",
+                             "SistemaGitlab",
+                             "UrldoGIT", "DiretoriadoOwner",
+                             "GerenciaSrdoOwner", "Owner", "Linguagem", "Title", "TipodeBuild",
+                             "CIServer", "TipoFerramentaSCM_x0028_Controle",
+                             "DatadeAtualiza_x00e7__x00e3_o", "URLPipeline",
+                             "StatusdaMigra_x00e7__x00e3_o", "Ignorar",
+                             "Sistema_x0028_AF_x0029_Id"])
 
 
-def check_hub_pagamentos_filter(url_value, item, connection):
+def check_hub_pagamentos_filter(url_value, item, data_metrics, connection):
     aux_id = item.get('ID')
     validado = item.get('VALIDADO')
     if re.search('https://gitlab.redecorp.br/hubdepagamento', url_value):
-        dataMetrics.all_hub_pag.append(item)
+        data_metrics.data_hub_pag.all_items.append(item)
         if validado:
-            dataMetrics.all_hub_pag_done.append(item)
+            data_metrics.all_hub_pag_done.append(item)
+            data_metrics.data_hub_pag.all_validados(item)
+            it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
+            if it_acao is None:
+                it_acao = 'Migrar'
+            if re.search('Sanitizar', it_acao):
+                data_metrics.data_hub_pag.all_sanitizar.append(item)
+            elif re.search('Migrar', it_acao):
+                data_metrics.data_hub_pag.all_migrar.append(item)
         # update_aux_filter_value(aux_id, 'HUB_PAGAMENTO', connection)
 
 
-def check_b2b_filter(url_value, item, connection):
+def check_b2b_filter(url_value, item, data_metrics, connection):
     aux_id = item.get('ID')
-    validado = item.get('VALIDADO')
+
     v_diretor = item.get('DiretoriadoOwner')
+
     if isinstance(v_diretor, str):
         if re.search('Gabriel Simoes Goncalves Da Silva', v_diretor):
-            dataMetrics.all_b2b.append(item)
-            if validado:
-                dataMetrics.all_b2b_done.append(item)
+            v_sistema_gitlab = item.get('SistemaGitlab')
+            validado = item.get('VALIDADO')
+            if v_sistema_gitlab is None:
+                v_sistema_gitlab = ""
+            if re.search('LOJAONLINE-B2B', v_sistema_gitlab):
+                data_metrics.data_loja_b2b.all_items.append(item)
+            else:
+                data_metrics.data_b2b.all_items.append(item)
+                validado = item.get('VALIDADO')
+                if validado:
+                    data_metrics.data_b2b.all_validados.append(item)
+                    it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
+                    if it_acao is None:
+                        it_acao = 'Migrar'
+                    if re.search('Sanitizar', it_acao):
+                        data_metrics.data_b2b.all_sanitizar.append(item)
+                    elif re.search('Migrar', it_acao):
+                        data_metrics.data_b2b.all_migrar.append(item)
+
             # update_aux_filter_value(aux_id, 'HUB_PAGAMENTO', connection)
 
 
-def check_loja_online_filter(url_value, item, df_loja, connection):
+def check_loja_online_filter(url_value, item, df_loja, data_metrics, connection):
     aux_id = item.get('ID')
     validado = item.get('VALIDADO')
-
+    it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
     if url_value in df_loja['URL_GIT'].unique():
-        dataMetrics.all_loja_online.append(item)
+        data_metrics.data_loja_b2c.all_items.append(item)
         if validado:
-            dataMetrics.all_loja_online_done.append(item)
+            data_metrics.data_loja_b2c.all_validados.append(item)
+            if it_acao is None:
+                it_acao = 'Migrar'
+            if re.search('Sanitizar', it_acao):
+                data_metrics.data_loja_b2c.all_sanitizar.append(item)
+            elif re.search('Migrar', it_acao):
+                data_metrics.data_loja_b2c.all_migrar.append(item)
 
         i = df_loja[df_loja['URL_GIT'] == url_value]
         v_acao = i.get('ACAO').to_string()
@@ -228,113 +260,114 @@ def check_loja_online_filter(url_value, item, df_loja, connection):
         elif re.search('SANITIZAR', v_acao):
             v_acao = 'Sanitizar'
 
-        update_email_ponto_focal(aux_id, 'lucas.pereira@telefonica.com', connection)
-        update_acao_apos_revisao(aux_id, v_acao, connection)
+        # update_email_ponto_focal(aux_id, 'lucas.pereira@telefonica.com', connection)
+        # update_acao_apos_revisao(aux_id, v_acao, connection)
         # update_aux_filter_value(aux_id, 'LOJA_ONLINE_B2C', connection)
 
 
+def integracao_data_metrics_update(item, data_metrics, connection):
+    validado = item.get('VALIDADO')
+    data_metrics.data_integra.all_items.append(item)
+    if validado:
+        it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
+        data_metrics.data_integra.all_validados.append(item)
+        if it_acao is None:
+            it_acao = 'Migrar'
+        if re.search('Sanitizar', it_acao):
+            data_metrics.data_integra.all_sanitizar.append(item)
+        elif re.search('Migrar', it_acao):
+            data_metrics.data_integra.all_migrar.append(item)
 
-def check_integracao_dip_filter(url_value, item, connection):
+
+def check_integracao_dip_filter(url_value, item, data_metrics, connection):
     aux_id = item.get('ID')
     validado = item.get('VALIDADO')
     if re.search('https://gitlab.redecorp.br/business-partner-domain', url_value):
-        dataMetrics.dip_Business_Partner_Domain.append(item)
-        if validado:
-            dataMetrics.dip_Business_Partner_Domain_done.append(item)
+        integracao_data_metrics_update(item, data_metrics, connection)
         # update_aux_filter_value(aux_id, 'DIP-Business-Partner-Domain', connection)
     elif re.search('https://gitlab.redecorp.br/common-domain', url_value):
-        dataMetrics.dip_Common_Domain.append(item)
-        if validado:
-            dataMetrics.dip_Common_Domain_done.append(item)
+        integracao_data_metrics_update(item, data_metrics, connection)
         # update_aux_filter_value(aux_id, 'DIP-Common-Domain', connection)
     elif re.search('https://gitlab.redecorp.br/customer-domain', url_value):
-        dataMetrics.dip_Customer_Domain.append(item)
-        if validado:
-            dataMetrics.dip_Customer_Domain_done.append(item)
+        integracao_data_metrics_update(item, data_metrics, connection)
         # update_aux_filter_value(aux_id, 'DIP-Customer-Domain', connection)
     elif re.search('https://gitlab.redecorp.br/enterprise-domain', url_value):
-        dataMetrics.dip_Enterprise_Domain.append(item)
-        if validado:
-            dataMetrics.dip_Enterprise_Domain_done.append(item)
+        integracao_data_metrics_update(item, data_metrics, connection)
         # update_aux_filter_value(aux_id, 'DIP-Enterprise-Domain', connection)
     elif re.search('https://gitlab.redecorp.br/integration-domain', url_value):
-        dataMetrics.dip_Integration_Domain.append(item)
-        if validado:
-            dataMetrics.dip_Integration_Domain_done.append(item)
+        integracao_data_metrics_update(item, data_metrics, connection)
         # update_aux_filter_value(aux_id, 'DIP-Integration-Domain', connection)
     elif re.search('https://gitlab.redecorp.br/market-sales-domain', url_value):
-        dataMetrics.dip_Market_Sales_Domain.append(item)
-        if validado:
-            dataMetrics.dip_Market_Sales_Domain_done.append(item)
+        integracao_data_metrics_update(item, data_metrics, connection)
         # update_aux_filter_value(aux_id, 'DIP-Market-Sales-Domain', connection)
     elif re.search('https://gitlab.redecorp.br/product-domain', url_value):
-        dataMetrics.dip_Product_Domain.append(item)
-        if validado:
-            dataMetrics.dip_Product_Domain_done.append(item)
+        integracao_data_metrics_update(item, data_metrics, connection)
         # update_aux_filter_value(aux_id, 'DIP-Product-Domain', connection)
     elif re.search('https://gitlab.redecorp.br/resource-domain', url_value):
-        dataMetrics.dip_Resource_Domain.append(item)
-        if validado:
-            dataMetrics.dip_Resource_Domain_done.append(item)
+        integracao_data_metrics_update(item, data_metrics, connection)
         # update_aux_filter_value(aux_id, 'DIP-Resource-Domain', connection)
     elif re.search('https://gitlab.redecorp.br/service-domain', url_value):
-        dataMetrics.dip_Service_Domain.append(item)
-        if validado:
-            dataMetrics.dip_Service_Domain_done.append(item)
+        integracao_data_metrics_update(item, data_metrics, connection)
         # update_aux_filter_value(aux_id, 'DIP-Service-Domain', connection)
     elif re.search('https://gitlab.redecorp.br/osb', url_value):
-        dataMetrics.l_osb.append(item)
-        if validado:
-            dataMetrics.l_osb_done.append(item)
+        integracao_data_metrics_update(item, data_metrics, connection)
         # update_aux_filter_value(aux_id, 'OSB', connection)
     elif re.search('https://gitlab.redecorp.br/soa', url_value):
-        dataMetrics.l_soa.append(item)
-        if validado:
-            dataMetrics.l_soa_done.append(item)
+        integracao_data_metrics_update(item, data_metrics, connection)
         # update_aux_filter_value(aux_id, 'SOA', connection)
     elif re.search('https://gitlab.redecorp.br/api-management/src-77', url_value):
-        dataMetrics.l_api_gateway.append(item)
-        if validado:
-            dataMetrics.l_api_gateway_done.append(item)
+        integracao_data_metrics_update(item, data_metrics, connection)
+
         # update_aux_filter_value(aux_id, 'API-Gateway', connection)
 
 
-def export_csv_integracao_dip_filter(connection):
-    generate_csv_file('c:/Temp/dip_Business_Partner_Domain.csv', dataMetrics.dip_Business_Partner_Domain)
-    generate_csv_file('c:/Temp/dip_Common_Domain.csv', dataMetrics.dip_Common_Domain)
-    generate_csv_file('c:/Temp/dip_Customer_Domain.csv', dataMetrics.dip_Customer_Domain)
-    generate_csv_file('c:/Temp/dip_Enterprise_Domain.csv', dataMetrics.dip_Enterprise_Domain)
-    generate_csv_file('c:/Temp/dip_Integration_Domain.csv', dataMetrics.dip_Integration_Domain)
-    generate_csv_file('c:/Temp/dip_Market_Sales_Domain.csv', dataMetrics.dip_Market_Sales_Domain)
-    generate_csv_file('c:/Temp/dip_Product_Domain.csv', dataMetrics.dip_Product_Domain)
-    generate_csv_file('c:/Temp/dip_Resource_Domain.csv', dataMetrics.dip_Resource_Domain)
-    generate_csv_file('c:/Temp/dip_Service_Domain.csv', dataMetrics.dip_Service_Domain)
+def check_4t_url(url_value, item, data_metrics, connection):
+    aux_id = item.get('ID')
 
-    total_dip = len(dataMetrics.dip_Business_Partner_Domain) + len(dataMetrics.dip_Common_Domain) + len(
-        dataMetrics.dip_Customer_Domain) + len(
-        dataMetrics.dip_Enterprise_Domain) + len(dataMetrics.dip_Integration_Domain)
-    total_dip = total_dip + len(dataMetrics.dip_Market_Sales_Domain) + len(dataMetrics.dip_Product_Domain) + len(
-        dataMetrics.dip_Resource_Domain) + len(
-        dataMetrics.dip_Service_Domain)
-
-    total_osb = len(dataMetrics.l_osb)
-    total_soa = len(dataMetrics.l_soa)
-    total_gateway = len(dataMetrics.l_api_gateway)
-
-    connection.logger.info(f"{total_dip} total dip.")
-    connection.logger.info(f"{total_osb} total osb.")
-    connection.logger.info(f"{total_soa} total soa.")
-    connection.logger.info(f"{total_gateway} total api gateway.")
-
-    total_area = total_dip + total_soa + total_gateway + total_osb
-    connection.logger.info(f"{total_area} total area integrações.")
-
-    generate_csv_file('c:/Temp/osb.csv', dataMetrics.l_osb)
-    generate_csv_file('c:/Temp/soa.csv', dataMetrics.l_soa)
-    generate_csv_file('c:/Temp/api_gateway.csv', dataMetrics.l_api_gateway)
+    is_4t = False
+    if re.search('https://gitlab.redecorp.br/framework-brasil', url_value):
+        is_4t = True
+    elif re.search('https://gitlab.redecorp.br/fb-app-vivo', url_value):
+        is_4t = True
+    elif re.search('https://gitlab.redecorp.br/meuvivo-b2c-ecare', url_value):
+        is_4t = True
+    elif re.search('https://gitlab.redecorp.br/microservicos4p', url_value):
+        is_4t = True
+    elif re.search('https://gitlab.redecorp.br/MicroServicosMeuVivo', url_value):
+        is_4t = True
+    if is_4t:
+        update_aux_filter_value(aux_id, '4T', connection)
 
 
-def get_all_sharepoint_list_items(connection):
+def check_4p_filter(url_value, item, data_metrics, connection):
+    aux_id = item.get('ID')
+
+    aux_filter = item.get('aux_filter_data')
+    if aux_filter is None:
+        aux_filter = ""
+    if re.search('4T', aux_filter):
+        validado = item.get('VALIDADO')
+        data_metrics.data_plataforma.all_items.append(item)
+        if validado:
+            it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
+            data_metrics.data_plataforma.all_validados.append(item)
+            if it_acao is None:
+                it_acao = 'Migrar'
+            if re.search('Sanitizar', it_acao):
+                data_metrics.data_plataforma.all_sanitizar.append(item)
+            elif re.search('Migrar', it_acao):
+                data_metrics.data_plataforma.all_migrar.append(item)
+    # check_4t_url(url_value, item, data_metrics, connection)
+
+
+def export_csv_integracao_dip_filter(data_metrics, connection):
+    generate_csv_file('c:/Temp/vivo/revisados_integra.csv', data_metrics.data_integra.all_validados)
+    generate_csv_file('c:/Temp/vivo/revisados_b2b.csv', data_metrics.data_b2b.all_validados)
+    generate_csv_file('c:/Temp/vivo/revisados_loja_b2c.csv', data_metrics.data_loja_b2c.all_validados)
+    generate_csv_file('c:/Temp/vivo/revisados_hub_pag.csv', data_metrics.data_hub_pag.all_validados)
+    generate_csv_file('c:/Temp/vivo/revisados_plataforma.csv', data_metrics.data_plataforma.all_validados)
+
+def get_all_sharepoint_list_items(data_metrics, connection):
     api_url = f"{connection.site_url}/_api/web/lists/getbytitle('{connection.list_name}')/items"
 
     headers = {
@@ -349,7 +382,6 @@ def get_all_sharepoint_list_items(connection):
         col_found.append('False')
     df_lojaonline['FOUND'] = col_found
     df_lojaonline.to_csv('c:/Temp/loja_log1.csv')
-    tam = len(dataMetrics.all_loja_online)
     count = 0
     while True:
         response = requests.get(api_url, cookies=connection.cookies, headers=headers)
@@ -364,17 +396,18 @@ def get_all_sharepoint_list_items(connection):
                 if url_value is not None:
                     url_value = url_value["Url"]
                     item[url_repo_internal_field] = url_value
-                dataMetrics.all_items.append(item)
+                data_metrics.all_items.append(item)
 
                 validado = item.get('VALIDADO')
                 if validado:
-                    dataMetrics.all_items_validados.append(item)
+                    data_metrics.all_items_validados.append(item)
                 else:
-                    dataMetrics.all_items_not_validados.append(item)
-                check_integracao_dip_filter(url_value, item, connection)
-                check_hub_pagamentos_filter(url_value, item, connection)
-                check_b2b_filter(url_value, item, connection)
-                check_loja_online_filter(url_value, item, df_lojaonline, connection)
+                    data_metrics.all_items_not_validados.append(item)
+                check_integracao_dip_filter(url_value, item, data_metrics, connection)
+                check_hub_pagamentos_filter(url_value, item, data_metrics, connection)
+                check_b2b_filter(url_value, item, data_metrics, connection)
+                check_loja_online_filter(url_value, item, df_lojaonline, data_metrics, connection)
+                check_4p_filter(url_value, item, data_metrics, connection)
             connection.logger.info(f"{count} itens processados.")
 
             # Check if more items are available
@@ -388,20 +421,18 @@ def get_all_sharepoint_list_items(connection):
                 f"Falha ao recuperar itens. {response.status_code}",
                 response=response)
 
-    export_csv_integracao_dip_filter(connection)
-    generate_csv_file('c:/Temp/validados.csv', dataMetrics.all_items_validados)
-    generate_csv_file('c:/Temp/not_validados.csv', dataMetrics.all_items_not_validados)
-    df_all_l = pd.DataFrame(dataMetrics.all_loja_online)
+    export_csv_integracao_dip_filter(data_metrics, connection)
+    generate_csv_file('c:/Temp/validados.csv', data_metrics.all_items_validados)
+    generate_csv_file('c:/Temp/not_validados.csv', data_metrics.all_items_not_validados)
+    # df_all_l = pd.DataFrame(data_metrics.all_loja_online)
     list_not_in = []
-    list_all = df_lojaonline['URL_GIT'].tolist()
-    for item in list_all:
-        if item in df_all_l['UrldoGIT'].unique():
-            print("Achou" + item)
-        else:
-            list_not_in.append(item)
-    aux_df = pd.DataFrame(list_not_in)
-    aux_df.to_csv('c:/Temp/loja_not_found.csv')
-    return dataMetrics.all_items
+    # list_all = df_lojaonline['URL_GIT'].tolist()
+    # for item in list_all:
+    #    if item not in df_all_l['UrldoGIT'].unique():
+    #        list_not_in.append(item)
+    # aux_df = pd.DataFrame(list_not_in)
+    # aux_df.to_csv('c:/Temp/loja_not_found.csv')
+    return data_metrics.all_items
 
 
 def get_sharepoint_filtered_items(filter_query, connection, select_fields=None):
@@ -613,9 +644,14 @@ def create_sharepoint_list_item(item, connection):
         response.raise_for_status()
 
 
+
+def teste_resumo_csv(csv_file_path, connection):
+    dataMetrics = DataMetrics(connection.logger)
+    dataMetrics.log_resume()
 def generate_sharepoint_list_all_items_csv(csv_file_path, connection):
-    dataMetrics.logger = connection.logger
-    df_sharepoint = pd.DataFrame(get_all_sharepoint_list_items(connection))
+    dataMetrics = DataMetrics(connection.logger)
+
+    df_sharepoint = pd.DataFrame(get_all_sharepoint_list_items(dataMetrics, connection))
     connection.logger.debug(f'{len(df_sharepoint.index)} itens recuperados do sharepoint.')
     connection.logger.debug(df_sharepoint.columns)
 

@@ -1,96 +1,136 @@
 import logging
+import pandas as pd
+from datetime import datetime
+from utils import data_area as da
 
 
 class DataMetrics:
-    logger = None
-    FOLDER_EXPORT_DATA = "c:/Temp/"
-    all_items = []  # List to store all items
-    all_items_validados = [];
-    all_items_not_validados = [];
-    dip_Business_Partner_Domain = []
-    dip_Common_Domain = []
-    dip_Customer_Domain = []
-    dip_Enterprise_Domain = []
-    dip_Integration_Domain = []
-    dip_Market_Sales_Domain = []
-    dip_Product_Domain = []
-    dip_Resource_Domain = []
-    dip_Service_Domain = []
-    l_osb = []
-    l_soa = []
-    l_api_gateway = []
 
-    dip_Business_Partner_Domain_done = []
-    dip_Common_Domain_done = []
-    dip_Customer_Domain_done = []
-    dip_Enterprise_Domain_done = []
-    dip_Integration_Domain_done = []
-    dip_Market_Sales_Domain_done = []
-    dip_Product_Domain_done = []
-    dip_Resource_Domain_done = []
-    dip_Service_Domain_done = []
-    l_osb_done = []
-    l_soa_done = []
-    l_api_gateway_done = []
+    def __init__(self, logger: object) -> object:
+        self.FOLDER_EXPORT_DATA = "c:/Temp/vivo"
+        self.logger = logger
 
-    all_loja_online = []
-    all_loja_online_done = []
+        self.data_loja_b2c = da.DataArea('Loja Online (B2C)', 'sharepoint_list_loja_online_b2c.csv', self.logger)
+        self.data_b2b = da.DataArea('B2B', 'sharepoint_list_b2b.csv', self.logger)
+        self.data_integra = da.DataArea('Integracoes', 'sharepoint_list_integra.csv', self.logger)
+        self.data_hub_pag = da.DataArea('Hub Pagamentos', 'sharepoint_list_hub_pag.csv', self.logger)
+        self.data_plataforma = da.DataArea('Plataforma Digitais', 'sharepoint_list_4p.csv', self.logger)
+        self.data_loja_b2b = da.DataArea('Loja Online (B2B)', 'sharepoint_list_loja_online_b2b.csv', self.logger)
 
-    all_b2b = []
-    all_b2b_done = []
-
-    all_hub_pag = []
-    all_hub_pag_done = []
+        self.all_items = []  # List to store all items
+        self.all_items_validados = [];
+        self.all_items_not_validados = [];
+        self.all_items_build_pack = [];
+        self.all_items_legados = [];
 
 
+
+    def generate_resumo_integracao_csv(self):
+        data_str = datetime.today().strftime('%d/%m/%Y')
+        hora_str = datetime.today().strftime('%H:%M:%S')
+        df  = pd.read_csv("c:/Temp/vivo/resumo_integra.csv")
+        v_total = len(self.data_integra.all_items)
+        v_validados = len(self.data_integra.all_validados)
+        v_sanitizar = len(self.data_integra.all_sanitizar)
+        v_migrar = len(self.data_integra.all_migrar)
+        v_pendentes = v_total - v_validados
+        v_percent = (v_validados * 100) / v_total
+        new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados,
+                   'pendentes': v_pendentes, 'migrar': v_migrar, 'sanitizar': v_sanitizar, 'percent': v_percent}
+        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+        df.to_csv("c:/Temp/vivo/resumo_integra.csv",
+                  columns=['data', 'hora', 'escopo', 'validados', 'pendentes', 'migrar', 'sanitizar', 'percent'])
+
+    def generate_resumo_b2b_csv(self):
+        data_str = datetime.today().strftime('%d/%m/%Y')
+        hora_str = datetime.today().strftime('%H:%M:%S')
+        df = pd.read_csv("c:/Temp/vivo/resumo_b2b.csv")
+        v_total = len(self.data_b2b.all_items)
+        v_validados = len(self.data_b2b.all_validados)
+        v_sanitizar = len(self.data_b2b.all_sanitizar)
+        v_migrar = len(self.data_b2b.all_migrar)
+        v_pendentes = v_total - v_validados
+        v_percent = (v_validados * 100) / v_total
+        new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados,
+                   'pendentes': v_pendentes, 'migrar': v_migrar, 'sanitizar': v_sanitizar, 'percent': v_percent}
+        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+        df.to_csv("c:/Temp/vivo/resumo_b2b.csv",
+                  columns=['data', 'hora', 'escopo', 'validados', 'pendentes', 'migrar', 'sanitizar', 'percent'])
+
+    def generate_resumo_loja_b2c_csv(self):
+        data_str = datetime.today().strftime('%d/%m/%Y')
+        hora_str = datetime.today().strftime('%H:%M:%S')
+        df = pd.read_csv("c:/Temp/vivo/resumo_loja_b2c.csv")
+        v_total = len(self.data_loja_b2c.all_items)
+        v_validados = len(self.data_loja_b2c.all_validados)
+        v_sanitizar = len(self.data_loja_b2c.all_sanitizar)
+        v_migrar = len(self.data_loja_b2c.all_migrar)
+        v_pendentes = v_total - v_validados
+        v_percent = (v_validados * 100) / v_total
+        new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados,
+                   'pendentes': v_pendentes, 'migrar': v_migrar, 'sanitizar': v_sanitizar, 'percent': v_percent}
+        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+        df.to_csv("c:/Temp/vivo/resumo_loja_b2c.csv",
+                  columns=['data', 'hora', 'escopo', 'validados', 'pendentes', 'migrar', 'sanitizar', 'percent'])
+
+    def generate_resumo_plataforma_csv(self):
+        data_str = datetime.today().strftime('%d/%m/%Y')
+        hora_str = datetime.today().strftime('%H:%M:%S')
+        df = pd.read_csv("c:/Temp/vivo/resumo_plataforma.csv")
+        v_total = len(self.data_plataforma.all_items)
+        v_validados = len(self.data_plataforma.all_validados)
+        v_sanitizar = len(self.data_plataforma.all_sanitizar)
+        v_migrar = len(self.data_plataforma.all_migrar)
+        v_pendentes = v_total - v_validados
+        v_percent = (v_validados * 100) / v_total
+        new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados,
+                   'pendentes': v_pendentes, 'migrar': v_migrar, 'sanitizar': v_sanitizar, 'percent': v_percent}
+        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+        df.to_csv("c:/Temp/vivo/resumo_plataforma.csv",
+                  columns=['data', 'hora', 'escopo', 'validados', 'pendentes', 'migrar', 'sanitizar', 'percent'])
+    def generate_resumo_hub_pag_csv(self):
+        data_str = datetime.today().strftime('%d/%m/%Y')
+        hora_str = datetime.today().strftime('%H:%M:%S')
+        df = pd.read_csv("c:/Temp/vivo/resumo_hub_pag.csv")
+        v_total = len(self.data_hub_pag.all_items)
+        v_validados = len(self.data_hub_pag.all_validados)
+        v_sanitizar = len(self.data_hub_pag.all_sanitizar)
+        v_migrar = len(self.data_hub_pag.all_migrar)
+        v_pendentes = v_total - v_validados
+        v_percent = (v_validados * 100) / v_total
+        new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados,
+                   'pendentes': v_pendentes, 'migrar': v_migrar, 'sanitizar': v_sanitizar, 'percent': v_percent}
+        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+        df.to_csv("c:/Temp/vivo/resumo_hub_pag.csv",
+                  columns=['data', 'hora', 'escopo', 'validados', 'pendentes', 'migrar', 'sanitizar', 'percent'])
+
+
+
+    def generate_resumo_geral_csv(self):
+        data_str = datetime.today().strftime('%d/%m/%Y')
+        hora_str = datetime.today().strftime('%H:%M:%S')
+        df = pd.read_csv("c:/Temp/vivo/resumo_geral.csv")
+        v_total     = len(self.data_integra.all_items) +     len(self.data_plataforma.all_items)      + len(self.data_hub_pag.all_items)     +  len(self.data_loja_b2c.all_items)     + len(self.data_b2b.all_items)
+        v_validados = len(self.data_integra.all_validados) + len(self.data_plataforma.all_validados)  + len(self.data_hub_pag.all_validados) +  len(self.data_loja_b2c.all_validados) + len(self.data_b2b.all_validados)
+        v_sanitizar = len(self.data_integra.all_sanitizar) + len(self.data_plataforma.all_sanitizar)  + len(self.data_hub_pag.all_sanitizar) +  len(self.data_loja_b2c.all_sanitizar) + len(self.data_b2b.all_sanitizar)
+        v_migrar    = len(self.data_integra.all_migrar) +    len(self.data_plataforma.all_migrar)     + len(self.data_hub_pag.all_migrar)    +  len(self.data_loja_b2c.all_migrar)    + len(self.data_b2b.all_migrar)
+        v_pendentes = v_total - v_validados
+        v_percent = (v_validados * 100) / v_total
+        new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados,
+                   'pendentes': v_pendentes, 'migrar': v_migrar, 'sanitizar': v_sanitizar, 'percent' : v_percent}
+        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+        df.to_csv("c:/Temp/vivo/resumo_geral.csv",  columns= ['data','hora','escopo','validados', 'pendentes', 'migrar','sanitizar', 'percent'])
     def log_resume(self):
+
+        self.generate_resumo_integracao_csv()
+        self.generate_resumo_b2b_csv()
+        self.generate_resumo_loja_b2c_csv()
+        self.generate_resumo_plataforma_csv()
+        self.generate_resumo_hub_pag_csv()
+        self.generate_resumo_geral_csv()
+
         self.logger.info('')
         self.logger.info('----------------------------------------------------------------')
 
-        total_b2b = len(self.all_b2b)
-        total_b2b_done = len( self.all_b2b_done)
-        total_b2b_pendentes = total_b2b - total_b2b_done
-
-        total_loja_online = len(self.all_loja_online)
-        total_loja_online_done = len(self.all_loja_online_done)
-        total_loja_online_pendentes = total_loja_online - total_loja_online_done
-
-        total_hub_pag = len(self.all_hub_pag)
-        total_hub_pag_done = len(self.all_hub_pag_done)
-        total_hub_pag_pendentes = total_hub_pag - total_hub_pag_done
-
-        total_dip_done = len(self.dip_Business_Partner_Domain_done) + len(self.dip_Common_Domain_done) + \
-                         len(self.dip_Customer_Domain_done) + len(self.dip_Enterprise_Domain_done) + \
-                         len(self.dip_Integration_Domain_done) + len(self.dip_Market_Sales_Domain_done) + \
-                         len(self.dip_Product_Domain_done) + len(self.dip_Resource_Domain_done) + \
-                         len(self.dip_Service_Domain_done) + len(self.l_osb_done) + len(self.l_soa_done) + \
-                         len(self.l_api_gateway_done)
-        total_dip = len(self.dip_Business_Partner_Domain) + len(self.dip_Common_Domain) + \
-                    len(self.dip_Customer_Domain) + len(self.dip_Enterprise_Domain) + \
-                    len(self.dip_Integration_Domain) + len(self.dip_Market_Sales_Domain) + \
-                    len(self.dip_Product_Domain) + len(self.dip_Resource_Domain) + \
-                    len(self.dip_Service_Domain) + len(self.l_osb) + len(self.l_soa) + \
-                    len(self.l_api_gateway)
-
-        total_dip_pendentes = total_dip - total_dip_done
-
-        self.logger.info(f'B2B Total  {total_b2b}.')
-        self.logger.info(f'B2b Feito  {total_b2b_done}.')
-        self.logger.info(f'B2B Pendentes  {total_b2b_pendentes}')
-
-        self.logger.info(f'LojaOnline Total  {total_loja_online}.')
-        self.logger.info(f'LojaOnline Feito  {total_loja_online_done}.')
-        self.logger.info(f'LojaOnline Pendentes  {total_loja_online_pendentes}')
-
-        self.logger.info(f'DIP Total  {total_dip}.')
-        self.logger.info(f'DIP Feito  {total_dip_done}.')
-        self.logger.info(f'DIP Pendentes  {total_dip_pendentes}')
-
-        self.logger.info(f'Hub Pag. Total  {total_hub_pag}.')
-        self.logger.info(f'Hub Pag. Feito  {total_hub_pag_done}.')
-        self.logger.info(f'Hub Pag. Pendentes  {total_hub_pag_pendentes}')
 
         self.logger.info('----------------------------------------------------------------')
-
-
-
