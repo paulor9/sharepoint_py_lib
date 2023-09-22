@@ -64,6 +64,7 @@ def main():
     coloredlogs.install(level='DEBUG', logger=logger)
     connection = conn.Connection(logger)
     generate_sharepoint_list_all_items_csv(sharepoint_items_file_path, connection)
+   # import_new_gitlab_itens(connection)
  #  teste_resumo_csv(sharepoint_items_file_path, connection)
 
 

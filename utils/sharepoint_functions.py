@@ -228,14 +228,14 @@ def check_b2b_filter(url_value, item, data_metrics, connection):
                     data_metrics.data_b2b.all_items.append(item)
                     validado = item.get('VALIDADO')
                     if validado:
-                       data_metrics.data_b2b.all_validados.append(item)
-                       it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
-                       if it_acao is None:
-                          it_acao = 'Migrar'
-                       if re.search('Sanitizar', it_acao):
-                          data_metrics.data_b2b.all_sanitizar.append(item)
-                       elif re.search('Migrar', it_acao):
-                          data_metrics.data_b2b.all_migrar.append(item)
+                        data_metrics.data_b2b.all_validados.append(item)
+                        it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
+                        if it_acao is None:
+                            it_acao = 'Migrar'
+                        if re.search('Sanitizar', it_acao):
+                            data_metrics.data_b2b.all_sanitizar.append(item)
+                        elif re.search('Migrar', it_acao):
+                            data_metrics.data_b2b.all_migrar.append(item)
 
             # update_aux_filter_value(aux_id, 'HUB_PAGAMENTO', connection)
 
@@ -311,16 +311,18 @@ def check_integracao_dip_filter(url_value, item, data_metrics, connection):
     elif re.search('https://gitlab.redecorp.br/service-domain', url_value):
         integracao_data_metrics_update(item, data_metrics, connection)
         # update_aux_filter_value(aux_id, 'DIP-Service-Domain', connection)
-    #elif re.search('https://gitlab.redecorp.br/osb', url_value):
+    # elif re.search('https://gitlab.redecorp.br/osb', url_value):
     #    integracao_data_metrics_update(item, data_metrics, connection)
-        # update_aux_filter_value(aux_id, 'OSB', connection)
-   # elif re.search('https://gitlab.redecorp.br/soa', url_value):
-   #     integracao_data_metrics_update(item, data_metrics, connection)
-        # update_aux_filter_value(aux_id, 'SOA', connection)
-   # elif re.search('https://gitlab.redecorp.br/api-management/src-77', url_value):
-   #     integracao_data_metrics_update(item, data_metrics, connection)
+    # update_aux_filter_value(aux_id, 'OSB', connection)
 
-        # update_aux_filter_value(aux_id, 'API-Gateway', connection)
+
+# elif re.search('https://gitlab.redecorp.br/soa', url_value):
+#     integracao_data_metrics_update(item, data_metrics, connection)
+# update_aux_filter_value(aux_id, 'SOA', connection)
+# elif re.search('https://gitlab.redecorp.br/api-management/src-77', url_value):
+#     integracao_data_metrics_update(item, data_metrics, connection)
+
+# update_aux_filter_value(aux_id, 'API-Gateway', connection)
 
 
 def check_4t_url(url_value, item, data_metrics, connection):
@@ -361,7 +363,167 @@ def check_4p_filter(url_value, item, data_metrics, connection):
                 data_metrics.data_plataforma.all_migrar.append(item)
     # check_4t_url(url_value, item, data_metrics, connection)
 
-
+def check_diretor_filter(url_value, item, data_metrics, connection):
+    aux_id = item.get('ID')
+    aux_diretor  = item.get('DiretoriadoOwner')
+    if aux_diretor is None:
+        aux_diretor = ""
+    aux_diretor =  aux_diretor.upper()
+    validado = item.get('VALIDADO')
+    if re.search('Adriana Lika Shimomura'.upper(), aux_diretor) or re.search('Adriana Lika'.upper(), aux_diretor):
+        data_metrics.dir_adriana_lika.all_items.append(item)
+        if validado:
+            it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
+            data_metrics.dir_adriana_lika.all_validados.append(item)
+            if it_acao is None:
+                it_acao = 'Migrar'
+            if re.search('Sanitizar', it_acao):
+                data_metrics.dir_adriana_lika.all_sanitizar.append(item)
+            elif re.search('Migrar', it_acao):
+                data_metrics.dir_adriana_lika.all_migrar.append(item)
+    elif re.search('Ana Lucia Gomes De Sa Drumond Pardo'.upper(), aux_diretor):
+        data_metrics.dir_ana_lucia.all_items.append(item)
+        if validado:
+            it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
+            data_metrics.dir_ana_lucia.all_validados.append(item)
+            if it_acao is None:
+                it_acao = 'Migrar'
+            if re.search('Sanitizar', it_acao):
+                data_metrics.dir_ana_lucia.all_sanitizar.append(item)
+            elif re.search('Migrar', it_acao):
+                data_metrics.dir_ana_lucia.all_migrar.append(item)
+    elif re.search('Andre Dias Vitor Santos'.upper(), aux_diretor):
+        data_metrics.dir_andre_santos.all_items.append(item)
+        if validado:
+            it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
+            data_metrics.dir_andre_santos.all_validados.append(item)
+            if it_acao is None:
+                it_acao = 'Migrar'
+            if re.search('Sanitizar', it_acao):
+                data_metrics.dir_andre_santos.all_sanitizar.append(item)
+            elif re.search('Migrar', it_acao):
+                data_metrics.dir_andre_santos.all_migrar.append(item)
+    elif re.search('Bruno de Moraes'.upper(), aux_diretor):
+        data_metrics.dir_bruno_moraes.all_items.append(item)
+        if validado:
+            it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
+            data_metrics.dir_bruno_moraes.all_validados.append(item)
+            if it_acao is None:
+                it_acao = 'Migrar'
+            if re.search('Sanitizar', it_acao):
+                data_metrics.dir_bruno_moraes.all_sanitizar.append(item)
+            elif re.search('Migrar', it_acao):
+                data_metrics.dir_bruno_moraes.all_migrar.append(item)
+    elif re.search('Daniel Falbi'.upper(), aux_diretor):
+        data_metrics.dir_daniel_falbi.all_items.append(item)
+        if validado:
+            it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
+            data_metrics.dir_daniel_falbi.all_validados.append(item)
+            if it_acao is None:
+                it_acao = 'Migrar'
+            if re.search('Sanitizar', it_acao):
+                data_metrics.dir_daniel_falbi.all_sanitizar.append(item)
+            elif re.search('Migrar', it_acao):
+                data_metrics.dir_daniel_falbi.all_migrar.append(item)
+    elif re.search('Fabio Stellato'.upper(), aux_diretor):
+        data_metrics.dir_fabio_stellato.all_items.append(item)
+        if validado:
+            it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
+            data_metrics.dir_fabio_stellato.all_validados.append(item)
+            if it_acao is None:
+                it_acao = 'Migrar'
+            if re.search('Sanitizar', it_acao):
+                data_metrics.dir_fabio_stellato.all_sanitizar.append(item)
+            elif re.search('Migrar', it_acao):
+                data_metrics.dir_fabio_stellato.all_migrar.append(item)
+    elif re.search('Fernando Paes Campos'.upper(), aux_diretor):
+        data_metrics.dir_fernando_campos.all_items.append(item)
+        if validado:
+            it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
+            data_metrics.dir_fernando_campos.all_validados.append(item)
+            if it_acao is None:
+                it_acao = 'Migrar'
+            if re.search('Sanitizar', it_acao):
+                data_metrics.dir_fernando_campos.all_sanitizar.append(item)
+            elif re.search('Migrar', it_acao):
+                data_metrics.dir_fernando_campos.all_migrar.append(item)
+    elif re.search('Gabriel Simoes Goncalves Da Silva'.upper(), aux_diretor):
+        data_metrics.dir_gabriel_simioes.all_items.append(item)
+        if validado:
+            it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
+            data_metrics.dir_gabriel_simioes.all_validados.append(item)
+            if it_acao is None:
+                it_acao = 'Migrar'
+            if re.search('Sanitizar', it_acao):
+                data_metrics.dir_gabriel_simioes.all_sanitizar.append(item)
+            elif re.search('Migrar', it_acao):
+                data_metrics.dir_gabriel_simioes.all_migrar.append(item)
+    elif re.search('Giuliano Rodrigues Recco'.upper(), aux_diretor):
+        data_metrics.dir_giuliano_recco.all_items.append(item)
+        if validado:
+            it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
+            data_metrics.dir_giuliano_recco.all_validados.append(item)
+            if it_acao is None:
+                it_acao = 'Migrar'
+            if re.search('Sanitizar', it_acao):
+                data_metrics.dir_giuliano_recco.all_sanitizar.append(item)
+            elif re.search('Migrar', it_acao):
+                data_metrics.dir_giuliano_recco.all_migrar.append(item)
+    elif re.search('LUIS FELIPE JACOBSEN'.upper(), aux_diretor):
+        data_metrics.dir_luis_jacobsen.all_items.append(item)
+        if validado:
+            it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
+            data_metrics.dir_luis_jacobsen.all_validados.append(item)
+            if it_acao is None:
+                it_acao = 'Migrar'
+            if re.search('Sanitizar', it_acao):
+                data_metrics.dir_luis_jacobsen.all_sanitizar.append(item)
+            elif re.search('Migrar', it_acao):
+                data_metrics.dir_luis_jacobsen.all_migrar.append(item)
+    elif re.search('Nilson Franca Junior'.upper(), aux_diretor):
+        data_metrics.dir_nilson_franca.all_items.append(item)
+        if validado:
+            it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
+            data_metrics.dir_nilson_franca.all_validados.append(item)
+            if it_acao is None:
+                it_acao = 'Migrar'
+            if re.search('Sanitizar', it_acao):
+                data_metrics.dir_nilson_franca.all_sanitizar.append(item)
+            elif re.search('Migrar', it_acao):
+                data_metrics.dir_nilson_franca.all_migrar.append(item)
+    elif re.search('Patricia Razzolini Orn'.upper(), aux_diretor):
+        data_metrics.dir_patricia_orn.all_items.append(item)
+        if validado:
+            it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
+            data_metrics.dir_patricia_orn.all_validados.append(item)
+            if it_acao is None:
+                it_acao = 'Migrar'
+            if re.search('Sanitizar', it_acao):
+                data_metrics.dir_patricia_orn.all_sanitizar.append(item)
+            elif re.search('Migrar', it_acao):
+                data_metrics.dir_patricia_orn.all_migrar.append(item)
+    elif re.search('Tania De Araujo Azevedo'.upper(), aux_diretor):
+        data_metrics.dir_tania_azevedo.all_items.append(item)
+        if validado:
+            it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
+            data_metrics.dir_tania_azevedo.all_validados.append(item)
+            if it_acao is None:
+                it_acao = 'Migrar'
+            if re.search('Sanitizar', it_acao):
+                data_metrics.dir_tania_azevedo.all_sanitizar.append(item)
+            elif re.search('Migrar', it_acao):
+                data_metrics.dir_tania_azevedo.all_migrar.append(item)
+    else:
+        data_metrics.dir_sem_nome.all_items.append(item)
+        if validado:
+            it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
+            data_metrics.dir_sem_nome.all_validados.append(item)
+            if it_acao is None:
+                it_acao = 'Migrar'
+            if re.search('Sanitizar', it_acao):
+                data_metrics.dir_sem_nome.all_sanitizar.append(item)
+            elif re.search('Migrar', it_acao):
+                data_metrics.dir_sem_nome.all_migrar.append(item)
 def export_csv_revisados(data_metrics, connection):
     data_str = datetime.today().strftime('%d_%m_%Y')
     hora_str = datetime.today().strftime('%H_%M_%S')
@@ -377,6 +539,24 @@ def export_csv_revisados(data_metrics, connection):
     generate_csv_file(file_name, data_metrics.data_hub_pag.all_validados)
     file_name = path_vivo + "revisados_plataforma_4P_" + data_str + "_" + hora_str + ".csv"
     generate_csv_file(file_name, data_metrics.data_plataforma.all_validados)
+
+
+def import_new_gitlab_itens(connection):
+    df_new_itens = pd.read_csv('c:/Temp/novos_itens_ate_14_09_2023.csv')
+    df_sharepoint = pd.read_csv("c:/Temp/list_all_git_url2.csv")
+
+    df_sharepoint.set_index('url_git', inplace=True)
+
+    # search for rows with index value 'Bob'
+
+    for index, item in df_new_itens.iterrows():
+        urldoGIT = item.get("UrldoGIT")
+        result = df_sharepoint.query("url_git == @urldoGIT")
+        if len(result.index) > 0:
+            print("URL GIT JA existente " + urldoGIT)
+        else:
+            print("incluir  " + urldoGIT)
+    print("FIM")
 
 
 def get_all_sharepoint_list_items(data_metrics, connection):
@@ -413,6 +593,13 @@ def get_all_sharepoint_list_items(data_metrics, connection):
                 validado = item.get('VALIDADO')
                 if validado:
                     data_metrics.all_items_validados.append(item)
+                    it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
+                    if it_acao is None:
+                        it_acao = 'Migrar'
+                    if re.search('Sanitizar', it_acao):
+                        data_metrics.all_items_sanitizar.append(item)
+                    elif re.search('Migrar', it_acao):
+                        data_metrics.all_items_migrar.append(item)
                 else:
                     data_metrics.all_items_not_validados.append(item)
                 check_integracao_dip_filter(url_value, item, data_metrics, connection)
@@ -420,6 +607,7 @@ def get_all_sharepoint_list_items(data_metrics, connection):
                 check_b2b_filter(url_value, item, data_metrics, connection)
                 check_loja_online_filter(url_value, item, df_lojaonline, data_metrics, connection)
                 check_4p_filter(url_value, item, data_metrics, connection)
+                check_diretor_filter(url_value, item, data_metrics, connection)
             connection.logger.info(f"{count} itens processados.")
 
             # Check if more items are available
@@ -669,6 +857,7 @@ def generate_sharepoint_list_all_items_csv(csv_file_path, connection):
     connection.logger.debug(df_sharepoint.columns)
 
     df_sharepoint.to_csv(csv_file_path)
+    df_sharepoint.to_csv("c:/Temp/list_all_git_url.csv", columns=['UrldoGIT'])
 
     connection.logger.debug(csv_file_path + " gerado")
     dataMetrics.log_resume(True)
