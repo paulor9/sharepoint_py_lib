@@ -62,14 +62,16 @@ class DataMetrics:
         v_migrar = len(self.dir_sem_nome.all_migrar)
         v_pendentes = v_total - v_validados
         if v_total == 0:
-            v_percent = 0
+            v_percent_validados = 0
+            v_percent_pendentes = 0
         else:
-            v_percent = (v_validados * 100) / v_total
-        new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados, 'pendentes': v_pendentes, 'migrar': v_migrar, 'sanitizar': v_sanitizar, 'percent': v_percent}
+            v_percent_validados = (v_validados * 100) / v_total
+            v_percent_pendentes = (v_pendentes * 100) / v_total
+        new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados,'% Validado':  v_percent_validados ,
+                   'pendentes': v_pendentes, '% pendentes' : v_percent_pendentes,  'migrar': v_migrar, 'sanitizar': v_sanitizar}
         new_df = pd.DataFrame([new_row])
         name_file = self.FOLDER_EXPORT_DATA + "diario/diario_dir_adriana_lika_" + data_str_file + "_" + hora_str_file + ".csv"
-        new_df.to_csv(name_file,
-                      columns=['data', 'hora', 'escopo', 'validados', 'pendentes', 'migrar', 'sanitizar', 'percent'])
+        new_df.to_csv(name_file, columns=['data', 'hora', 'escopo', 'validados', '% Validado', 'pendentes', '% pendentes', 'migrar', 'sanitizar' ])
 
         return new_df
 
@@ -86,14 +88,18 @@ class DataMetrics:
         v_migrar = len(self.dir_adriana_lika.all_migrar)
         v_pendentes = v_total - v_validados
         if v_total == 0:
-            v_percent = 0
+            v_percent_validados = 0
+            v_percent_pendentes = 0
         else:
-            v_percent = (v_validados * 100) / v_total
-        new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados, 'pendentes': v_pendentes, 'migrar': v_migrar, 'sanitizar': v_sanitizar, 'percent': v_percent}
+            v_percent_validados = (v_validados * 100) / v_total
+            v_percent_pendentes = (v_pendentes * 100) / v_total
+        new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados,
+                   '% Validado': v_percent_validados,
+                   'pendentes': v_pendentes, '% pendentes': v_percent_pendentes, 'migrar': v_migrar,
+                   'sanitizar': v_sanitizar}
         new_df = pd.DataFrame([new_row])
         name_file = self.FOLDER_EXPORT_DATA + "diario/diario_dir_adriana_lika_" + data_str_file + "_" + hora_str_file + ".csv"
-        new_df.to_csv(name_file,
-                      columns=['data', 'hora', 'escopo', 'validados', 'pendentes', 'migrar', 'sanitizar', 'percent'])
+        new_df.to_csv(name_file, columns=['data', 'hora', 'escopo', 'validados', '% Validado', 'pendentes', '% pendentes', 'migrar', 'sanitizar' ])
 
         return new_df
 
@@ -108,16 +114,24 @@ class DataMetrics:
         v_sanitizar = len(self.dir_gabriel_simioes.all_sanitizar)
         v_migrar = len(self.dir_gabriel_simioes.all_migrar)
         v_pendentes = v_total - v_validados
+
         if v_total == 0:
-            v_percent = 0
+            v_percent_validados = 0
+            v_percent_pendentes = 0
         else:
-            v_percent = (v_validados * 100) / v_total
+            v_percent_validados = (v_validados * 100) / v_total
+            v_percent_pendentes = (v_pendentes * 100) / v_total
         new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados,
-                   'pendentes': v_pendentes, 'migrar': v_migrar, 'sanitizar': v_sanitizar, 'percent': v_percent}
+                   '% Validado': v_percent_validados,
+                   'pendentes': v_pendentes, '% pendentes': v_percent_pendentes, 'migrar': v_migrar,
+                   'sanitizar': v_sanitizar}
+
+
         new_df = pd.DataFrame([new_row])
         name_file = self.FOLDER_EXPORT_DATA + "diario/diario_dir_gabriel_simioes_" + data_str_file + "_" + hora_str_file + ".csv"
         new_df.to_csv(name_file,
-                      columns=['data', 'hora', 'escopo', 'validados', 'pendentes', 'migrar', 'sanitizar', 'percent'])
+                      columns=['data', 'hora', 'escopo', 'validados', '% Validado', 'pendentes', '% pendentes',
+                               'migrar', 'sanitizar'])
 
         return new_df
     def generate_resumo_dir_patricia_orn_csv(self, save_accumulated, data_now):
@@ -131,15 +145,23 @@ class DataMetrics:
         v_sanitizar = len(self.dir_patricia_orn.all_sanitizar)
         v_migrar = len(self.dir_patricia_orn.all_migrar)
         v_pendentes = v_total - v_validados
+
         if v_total == 0:
-            v_percent = 0
+            v_percent_validados = 0
+            v_percent_pendentes = 0
         else:
-            v_percent = (v_validados * 100) / v_total
-        new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados, 'pendentes': v_pendentes, 'migrar': v_migrar, 'sanitizar': v_sanitizar, 'percent': v_percent}
+            v_percent_validados = (v_validados * 100) / v_total
+            v_percent_pendentes = (v_pendentes * 100) / v_total
+        new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados,
+                   '% Validado': v_percent_validados,
+                   'pendentes': v_pendentes, '% pendentes': v_percent_pendentes, 'migrar': v_migrar,
+                   'sanitizar': v_sanitizar}
+
         new_df = pd.DataFrame([new_row])
         name_file = self.FOLDER_EXPORT_DATA + "diario/diario_dir_patricia_orn_" + data_str_file + "_" + hora_str_file + ".csv"
         new_df.to_csv(name_file,
-                      columns=['data', 'hora', 'escopo', 'validados', 'pendentes', 'migrar', 'sanitizar', 'percent'])
+                      columns=['data', 'hora', 'escopo', 'validados', '% Validado', 'pendentes', '% pendentes',
+                               'migrar', 'sanitizar'])
 
         return new_df
 
@@ -155,15 +177,23 @@ class DataMetrics:
         v_sanitizar = len(self.dir_tania_azevedo.all_sanitizar)
         v_migrar = len(self.dir_tania_azevedo.all_migrar)
         v_pendentes = v_total - v_validados
+
         if v_total == 0:
-            v_percent = 0
+            v_percent_validados = 0
+            v_percent_pendentes = 0
         else:
-            v_percent = (v_validados * 100) / v_total
-        new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados, 'pendentes': v_pendentes, 'migrar': v_migrar, 'sanitizar': v_sanitizar, 'percent': v_percent}
+            v_percent_validados = (v_validados * 100) / v_total
+            v_percent_pendentes = (v_pendentes * 100) / v_total
+        new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados,
+                   '% Validado': v_percent_validados,
+                   'pendentes': v_pendentes, '% pendentes': v_percent_pendentes, 'migrar': v_migrar,
+                   'sanitizar': v_sanitizar}
+
         new_df = pd.DataFrame([new_row])
         name_file = self.FOLDER_EXPORT_DATA + "diario/diario_dir_tania_azevedo_" + data_str_file + "_" + hora_str_file + ".csv"
         new_df.to_csv(name_file,
-                      columns=['data', 'hora', 'escopo', 'validados', 'pendentes', 'migrar', 'sanitizar', 'percent'])
+                      columns=['data', 'hora', 'escopo', 'validados', '% Validado', 'pendentes', '% pendentes',
+                               'migrar', 'sanitizar'])
 
         return new_df
 
@@ -179,16 +209,23 @@ class DataMetrics:
         v_sanitizar = len(self.dir_nilson_franca.all_sanitizar)
         v_migrar = len(self.dir_nilson_franca.all_migrar)
         v_pendentes = v_total - v_validados
+
         if v_total == 0:
-            v_percent = 0
+            v_percent_validados = 0
+            v_percent_pendentes = 0
         else:
-            v_percent = (v_validados * 100) / v_total
+            v_percent_validados = (v_validados * 100) / v_total
+            v_percent_pendentes = (v_pendentes * 100) / v_total
         new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados,
-                   'pendentes': v_pendentes, 'migrar': v_migrar, 'sanitizar': v_sanitizar, 'percent': v_percent}
+                   '% Validado': v_percent_validados,
+                   'pendentes': v_pendentes, '% pendentes': v_percent_pendentes, 'migrar': v_migrar,
+                   'sanitizar': v_sanitizar}
+
         new_df = pd.DataFrame([new_row])
         name_file = self.FOLDER_EXPORT_DATA + "diario/diario_dir_nilson_franca_" + data_str_file + "_" + hora_str_file + ".csv"
         new_df.to_csv(name_file,
-                      columns=['data', 'hora', 'escopo', 'validados', 'pendentes', 'migrar', 'sanitizar', 'percent'])
+                      columns=['data', 'hora', 'escopo', 'validados', '% Validado', 'pendentes', '% pendentes',
+                               'migrar', 'sanitizar'])
 
         return new_df
 
@@ -203,16 +240,23 @@ class DataMetrics:
         v_sanitizar = len(self.dir_luis_jacobsen.all_sanitizar)
         v_migrar = len(self.dir_luis_jacobsen.all_migrar)
         v_pendentes = v_total - v_validados
+
         if v_total == 0:
-            v_percent = 0
+            v_percent_validados = 0
+            v_percent_pendentes = 0
         else:
-            v_percent = (v_validados * 100) / v_total
+            v_percent_validados = (v_validados * 100) / v_total
+            v_percent_pendentes = (v_pendentes * 100) / v_total
         new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados,
-                   'pendentes': v_pendentes, 'migrar': v_migrar, 'sanitizar': v_sanitizar, 'percent': v_percent}
+                   '% Validado': v_percent_validados,
+                   'pendentes': v_pendentes, '% pendentes': v_percent_pendentes, 'migrar': v_migrar,
+                   'sanitizar': v_sanitizar}
+
         new_df = pd.DataFrame([new_row])
         name_file = self.FOLDER_EXPORT_DATA + "diario/diario_dir_luis_jacobsen_" + data_str_file + "_" + hora_str_file + ".csv"
         new_df.to_csv(name_file,
-                      columns=['data', 'hora', 'escopo', 'validados', 'pendentes', 'migrar', 'sanitizar', 'percent'])
+                      columns=['data', 'hora', 'escopo', 'validados', '% Validado', 'pendentes', '% pendentes',
+                               'migrar', 'sanitizar'])
 
         return new_df
 
@@ -227,16 +271,23 @@ class DataMetrics:
         v_sanitizar = len(self.dir_giuliano_recco.all_sanitizar)
         v_migrar = len(self.dir_giuliano_recco.all_migrar)
         v_pendentes = v_total - v_validados
+
         if v_total == 0:
-            v_percent = 0
+            v_percent_validados = 0
+            v_percent_pendentes = 0
         else:
-            v_percent = (v_validados * 100) / v_total
+            v_percent_validados = (v_validados * 100) / v_total
+            v_percent_pendentes = (v_pendentes * 100) / v_total
         new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados,
-                   'pendentes': v_pendentes, 'migrar': v_migrar, 'sanitizar': v_sanitizar, 'percent': v_percent}
+                   '% Validado': v_percent_validados,
+                   'pendentes': v_pendentes, '% pendentes': v_percent_pendentes, 'migrar': v_migrar,
+                   'sanitizar': v_sanitizar}
+
         new_df = pd.DataFrame([new_row])
         name_file = self.FOLDER_EXPORT_DATA + "diario/diario_dir_giuliano_recco_" + data_str_file + "_" + hora_str_file + ".csv"
         new_df.to_csv(name_file,
-                      columns=['data', 'hora', 'escopo', 'validados', 'pendentes', 'migrar', 'sanitizar', 'percent'])
+                      columns=['data', 'hora', 'escopo', 'validados', '% Validado', 'pendentes', '% pendentes',
+                               'migrar', 'sanitizar'])
 
         return new_df
 
@@ -251,16 +302,23 @@ class DataMetrics:
         v_sanitizar = len(self.dir_ana_lucia.all_sanitizar)
         v_migrar = len(self.dir_ana_lucia.all_migrar)
         v_pendentes = v_total - v_validados
+
         if v_total == 0:
-            v_percent = 0
+            v_percent_validados = 0
+            v_percent_pendentes = 0
         else:
-            v_percent = (v_validados * 100) / v_total
+            v_percent_validados = (v_validados * 100) / v_total
+            v_percent_pendentes = (v_pendentes * 100) / v_total
         new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados,
-                   'pendentes': v_pendentes, 'migrar': v_migrar, 'sanitizar': v_sanitizar, 'percent': v_percent}
+                   '% Validado': v_percent_validados,
+                   'pendentes': v_pendentes, '% pendentes': v_percent_pendentes, 'migrar': v_migrar,
+                   'sanitizar': v_sanitizar}
+
         new_df = pd.DataFrame([new_row])
         name_file = self.FOLDER_EXPORT_DATA + "diario/diario_dir_ana_lucia_" + data_str_file + "_" + hora_str_file + ".csv"
         new_df.to_csv(name_file,
-                      columns=['data', 'hora', 'escopo', 'validados', 'pendentes', 'migrar', 'sanitizar', 'percent'])
+                      columns=['data', 'hora', 'escopo', 'validados', '% Validado', 'pendentes', '% pendentes',
+                               'migrar', 'sanitizar'])
 
         return new_df
 
@@ -275,16 +333,23 @@ class DataMetrics:
         v_sanitizar = len(self.dir_andre_santos.all_sanitizar)
         v_migrar = len(self.dir_andre_santos.all_migrar)
         v_pendentes = v_total - v_validados
+
         if v_total == 0:
-            v_percent = 0
+            v_percent_validados = 0
+            v_percent_pendentes = 0
         else:
-            v_percent = (v_validados * 100) / v_total
+            v_percent_validados = (v_validados * 100) / v_total
+            v_percent_pendentes = (v_pendentes * 100) / v_total
         new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados,
-                   'pendentes': v_pendentes, 'migrar': v_migrar, 'sanitizar': v_sanitizar, 'percent': v_percent}
+                   '% Validado': v_percent_validados,
+                   'pendentes': v_pendentes, '% pendentes': v_percent_pendentes, 'migrar': v_migrar,
+                   'sanitizar': v_sanitizar}
+
         new_df = pd.DataFrame([new_row])
         name_file = self.FOLDER_EXPORT_DATA + "diario/diario_dir_andre_santos_" + data_str_file + "_" + hora_str_file + ".csv"
         new_df.to_csv(name_file,
-                      columns=['data', 'hora', 'escopo', 'validados', 'pendentes', 'migrar', 'sanitizar', 'percent'])
+                      columns=['data', 'hora', 'escopo', 'validados', '% Validado', 'pendentes', '% pendentes',
+                               'migrar', 'sanitizar'])
 
         return new_df
 
@@ -299,16 +364,23 @@ class DataMetrics:
         v_sanitizar = len(self.dir_bruno_moraes.all_sanitizar)
         v_migrar = len(self.dir_bruno_moraes.all_migrar)
         v_pendentes = v_total - v_validados
+
         if v_total == 0:
-            v_percent = 0
+            v_percent_validados = 0
+            v_percent_pendentes = 0
         else:
-            v_percent = (v_validados * 100) / v_total
+            v_percent_validados = (v_validados * 100) / v_total
+            v_percent_pendentes = (v_pendentes * 100) / v_total
         new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados,
-                   'pendentes': v_pendentes, 'migrar': v_migrar, 'sanitizar': v_sanitizar, 'percent': v_percent}
+                   '% Validado': v_percent_validados,
+                   'pendentes': v_pendentes, '% pendentes': v_percent_pendentes, 'migrar': v_migrar,
+                   'sanitizar': v_sanitizar}
+
         new_df = pd.DataFrame([new_row])
         name_file = self.FOLDER_EXPORT_DATA + "diario/diario_dir_bruno_moraes_" + data_str_file + "_" + hora_str_file + ".csv"
         new_df.to_csv(name_file,
-                      columns=['data', 'hora', 'escopo', 'validados', 'pendentes', 'migrar', 'sanitizar', 'percent'])
+                      columns=['data', 'hora', 'escopo', 'validados', '% Validado', 'pendentes', '% pendentes',
+                               'migrar', 'sanitizar'])
 
         if save_accumulated:
             name_file_save_accumulated = self.FOLDER_EXPORT_DATA + "acumulado/resumo_dir_bruno_moraes.csv"
@@ -329,16 +401,23 @@ class DataMetrics:
         v_sanitizar = len(self.dir_daniel_falbi.all_sanitizar)
         v_migrar = len(self.dir_daniel_falbi.all_migrar)
         v_pendentes = v_total - v_validados
+
         if v_total == 0:
-            v_percent = 0
+            v_percent_validados = 0
+            v_percent_pendentes = 0
         else:
-            v_percent = (v_validados * 100) / v_total
+            v_percent_validados = (v_validados * 100) / v_total
+            v_percent_pendentes = (v_pendentes * 100) / v_total
         new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados,
-                   'pendentes': v_pendentes, 'migrar': v_migrar, 'sanitizar': v_sanitizar, 'percent': v_percent}
+                   '% Validado': v_percent_validados,
+                   'pendentes': v_pendentes, '% pendentes': v_percent_pendentes, 'migrar': v_migrar,
+                   'sanitizar': v_sanitizar}
+
         new_df = pd.DataFrame([new_row])
         name_file = self.FOLDER_EXPORT_DATA + "diario/diario_dir_daniel_falbi_" + data_str_file + "_" + hora_str_file + ".csv"
         new_df.to_csv(name_file,
-                      columns=['data', 'hora', 'escopo', 'validados', 'pendentes', 'migrar', 'sanitizar', 'percent'])
+                      columns=['data', 'hora', 'escopo', 'validados', '% Validado', 'pendentes', '% pendentes',
+                               'migrar', 'sanitizar'])
 
         if save_accumulated:
             name_file_save_accumulated = self.FOLDER_EXPORT_DATA + "acumulado/resumo_dir_daniel_falbi.csv"
@@ -358,16 +437,23 @@ class DataMetrics:
         v_sanitizar = len(self.dir_fabio_stellato.all_sanitizar)
         v_migrar = len(self.dir_fabio_stellato.all_migrar)
         v_pendentes = v_total - v_validados
+
         if v_total == 0:
-            v_percent = 0
+            v_percent_validados = 0
+            v_percent_pendentes = 0
         else:
-            v_percent = (v_validados * 100) / v_total
+            v_percent_validados = (v_validados * 100) / v_total
+            v_percent_pendentes = (v_pendentes * 100) / v_total
         new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados,
-                   'pendentes': v_pendentes, 'migrar': v_migrar, 'sanitizar': v_sanitizar, 'percent': v_percent}
+                   '% Validado': v_percent_validados,
+                   'pendentes': v_pendentes, '% pendentes': v_percent_pendentes, 'migrar': v_migrar,
+                   'sanitizar': v_sanitizar}
+
         new_df = pd.DataFrame([new_row])
         name_file = self.FOLDER_EXPORT_DATA + "diario/diario_dir_fabio_stellato_" + data_str_file + "_" + hora_str_file + ".csv"
         new_df.to_csv(name_file,
-                      columns=['data', 'hora', 'escopo', 'validados', 'pendentes', 'migrar', 'sanitizar', 'percent'])
+                      columns=['data', 'hora', 'escopo', 'validados', '% Validado', 'pendentes', '% pendentes',
+                               'migrar', 'sanitizar'])
 
         if save_accumulated:
             name_file_save_accumulated = self.FOLDER_EXPORT_DATA + "acumulado/resumo_dir_fabio_stellato.csv"
@@ -388,16 +474,23 @@ class DataMetrics:
         v_sanitizar = len(self.dir_fernando_campos.all_sanitizar)
         v_migrar = len(self.dir_fernando_campos.all_migrar)
         v_pendentes = v_total - v_validados
+
         if v_total == 0:
-            v_percent = 0
+            v_percent_validados = 0
+            v_percent_pendentes = 0
         else:
-            v_percent = (v_validados * 100) / v_total
+            v_percent_validados = (v_validados * 100) / v_total
+            v_percent_pendentes = (v_pendentes * 100) / v_total
         new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados,
-                   'pendentes': v_pendentes, 'migrar': v_migrar, 'sanitizar': v_sanitizar, 'percent': v_percent}
+                   '% Validado': v_percent_validados,
+                   'pendentes': v_pendentes, '% pendentes': v_percent_pendentes, 'migrar': v_migrar,
+                   'sanitizar': v_sanitizar}
+
         new_df = pd.DataFrame([new_row])
         name_file = self.FOLDER_EXPORT_DATA + "diario/diario_dir_fernando_campos_" + data_str_file + "_" + hora_str_file + ".csv"
         new_df.to_csv(name_file,
-                      columns=['data', 'hora', 'escopo', 'validados', 'pendentes', 'migrar', 'sanitizar', 'percent'])
+                      columns=['data', 'hora', 'escopo', 'validados', '% Validado', 'pendentes', '% pendentes',
+                               'migrar', 'sanitizar'])
 
         if save_accumulated:
             name_file_save_accumulated = self.FOLDER_EXPORT_DATA + "acumulado/resumo_dir_fernando_campos.csv"
@@ -417,11 +510,13 @@ class DataMetrics:
         v_sanitizar = len(self.data_integra.all_sanitizar)
         v_migrar = len(self.data_integra.all_migrar)
         v_pendentes = v_total - v_validados
+
         if v_total == 0:
             v_percent = 0
         else:
             v_percent = (v_validados * 100) / v_total
-        new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados, 'pendentes': v_pendentes, 'migrar': v_migrar, 'sanitizar': v_sanitizar, 'percent': v_percent}
+        new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados,
+                   'pendentes': v_pendentes, 'migrar': v_migrar, 'sanitizar': v_sanitizar, 'percent': v_percent}
         new_df = pd.DataFrame([new_row])
         name_file = self.FOLDER_EXPORT_DATA + "diario/diario_integra_" + data_str_file + "_" + hora_str_file + ".csv"
         new_df.to_csv(name_file,
@@ -446,6 +541,7 @@ class DataMetrics:
         v_sanitizar = len(self.data_b2b.all_sanitizar)
         v_migrar = len(self.data_b2b.all_migrar)
         v_pendentes = v_total - v_validados
+
         if v_total == 0:
             v_percent = 0
         else:
@@ -566,16 +662,25 @@ class DataMetrics:
         v_sanitizar = len(self.all_items_sanitizar)
         v_migrar = len(self.all_items_migrar)
         v_pendentes = v_total - v_validados
+
         if v_total == 0:
-            v_percent = 0
+            v_percent_validados = 0
+            v_percent_pendentes = 0
         else:
-            v_percent = (v_validados * 100) / v_total
+            v_percent_validados = (v_validados * 100) / v_total
+            v_percent_pendentes = (v_pendentes * 100) / v_total
         new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados,
-                   'pendentes': v_pendentes, 'migrar': v_migrar, 'sanitizar': v_sanitizar, 'percent': v_percent}
+                   '% Validado': v_percent_validados,
+                   'pendentes': v_pendentes, '% pendentes': v_percent_pendentes, 'migrar': v_migrar,
+                   'sanitizar': v_sanitizar}
+
         new_df = pd.DataFrame([new_row])
         name_file = self.FOLDER_EXPORT_DATA + "diario/diario_geral_" + data_str_file + "_" + hora_str_file + ".csv"
-        new_df.to_csv(name_file,
-                      columns=['data', 'hora', 'escopo', 'validados', 'pendentes', 'migrar', 'sanitizar', 'percent'])
+        new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados,
+                   '% Validado': v_percent_validados,
+                   'pendentes': v_pendentes, '% pendentes': v_percent_pendentes, 'migrar': v_migrar,
+                   'sanitizar': v_sanitizar}
+
         if save_accumulated:
             name_file_save_accumulated = self.FOLDER_EXPORT_DATA + "acumulado/resumo_geral.csv"
             df = pd.read_csv(name_file_save_accumulated)
@@ -733,7 +838,8 @@ class DataMetrics:
         hora_str = data_now.strftime('%H_%M_%S')
         name_file = self.FOLDER_EXPORT_DATA + "diretor_agrupado_" + data_str + "_" + hora_str + ".csv"
         df_diretor.to_csv(name_file,
-                        columns=['Nome', 'escopo', 'validados', 'pendentes', 'migrar', 'sanitizar', 'percent'])
+                        columns=['Nome', 'escopo', 'validados', '% Validado', 'pendentes', '% pendentes',
+                               'migrar', 'sanitizar'])
 
         self.logger.info('')
         self.logger.info('----------------------------------------------------------------')

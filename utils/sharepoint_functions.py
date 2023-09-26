@@ -1,8 +1,13 @@
 import requests
 import pandas as pd
 import re
+
+import sys
+
+from time import sleep
 from .parameters import *
 from .data_metrics import *
+from .functions import *
 
 
 def get_sharepoint_digest(cookies, site_url, logger):
@@ -191,6 +196,17 @@ def generate_csv_file(p_path, p_list):
                              "Sistema_x0028_AF_x0029_Id"])
 
 
+def generate_import_csv_file(p_path, p_list):
+    if p_list is not None and len(p_list) > 0:
+        v_df = pd.DataFrame(p_list)
+        v_df.to_csv(p_path)
+        v_df.to_csv(p_path,
+                    columns=["ID","Sistema_x0028_AF_x0029_Id","SistemaGitlab", "DiretoriadoOwner", "GerenciaSrdoOwner", "Owner",
+                              "Linguagem","Title","TipodeBuild","CIServer", "TipoFerramentaSCM_x0028_Controle",
+                              "DatadeAtualiza_x00e7__x00e3_o","UrldoGIT", "URLPipeline", "StatusdaMigra_x00e7__x00e3_o"])
+
+
+
 def check_hub_pagamentos_filter(url_value, item, data_metrics, connection):
     aux_id = item.get('ID')
     validado = item.get('VALIDADO')
@@ -363,12 +379,13 @@ def check_4p_filter(url_value, item, data_metrics, connection):
                 data_metrics.data_plataforma.all_migrar.append(item)
     # check_4t_url(url_value, item, data_metrics, connection)
 
+
 def check_diretor_filter(url_value, item, data_metrics, connection):
     aux_id = item.get('ID')
-    aux_diretor  = item.get('DiretoriadoOwner')
+    aux_diretor = item.get('DiretoriadoOwner')
     if aux_diretor is None:
         aux_diretor = ""
-    aux_diretor =  aux_diretor.upper()
+    aux_diretor = aux_diretor.upper()
     validado = item.get('VALIDADO')
     if re.search('Adriana Lika Shimomura'.upper(), aux_diretor) or re.search('Adriana Lika'.upper(), aux_diretor):
         data_metrics.dir_adriana_lika.all_items.append(item)
@@ -524,6 +541,8 @@ def check_diretor_filter(url_value, item, data_metrics, connection):
                 data_metrics.dir_sem_nome.all_sanitizar.append(item)
             elif re.search('Migrar', it_acao):
                 data_metrics.dir_sem_nome.all_migrar.append(item)
+
+
 def export_csv_revisados(data_metrics, connection):
     data_str = datetime.today().strftime('%d_%m_%Y')
     hora_str = datetime.today().strftime('%H_%M_%S')
@@ -540,22 +559,29 @@ def export_csv_revisados(data_metrics, connection):
     file_name = path_vivo + "revisados_plataforma_4P_" + data_str + "_" + hora_str + ".csv"
     generate_csv_file(file_name, data_metrics.data_plataforma.all_validados)
 
+def export_csv_imported(data_metrics, connection):
+    data_str = datetime.today().strftime('%d_%m_%Y')
+    hora_str = datetime.today().strftime('%H_%M_%S')
+    path_vivo = "c:/vivo/"
+    file_name = path_vivo + "dir_sem_nome_" + data_str + "_" + hora_str + ".csv"
+    generate_import_csv_file(file_name, data_metrics.dir_sem_nome.all_items)
 
 def import_new_gitlab_itens(connection):
-    df_new_itens = pd.read_csv('c:/Temp/novos_itens_ate_14_09_2023.csv')
-    df_sharepoint = pd.read_csv("c:/Temp/list_all_git_url2.csv")
-
-    df_sharepoint.set_index('url_git', inplace=True)
-
-    # search for rows with index value 'Bob'
-
+    df_new_itens = pd.read_csv('c:/Temp/novos_itens_ate_25_09_2023.csv')
+    df_sharepoint = pd.read_csv("c:/Temp/list_all_git_url.csv")
+    df_sharepoint.set_index('UrldoGIT', inplace=True)
+    items_conflito = []
+    sem_conflito = True
     for index, item in df_new_itens.iterrows():
         urldoGIT = item.get("UrldoGIT")
-        result = df_sharepoint.query("url_git == @urldoGIT")
+        result = df_sharepoint.query("UrldoGIT == @urldoGIT")
         if len(result.index) > 0:
             print("URL GIT JA existente " + urldoGIT)
-        else:
-            print("incluir  " + urldoGIT)
+            items_conflito.append(item)
+            sem_conflito = False
+    if sem_conflito:
+        import_list_itens(df_new_itens, connection)
+
     print("FIM")
 
 
@@ -622,6 +648,7 @@ def get_all_sharepoint_list_items(data_metrics, connection):
                 response=response)
 
     export_csv_revisados(data_metrics, connection)
+    export_csv_imported(data_metrics, connection)
     generate_csv_file('c:/Temp/validados.csv', data_metrics.all_items_validados)
     generate_csv_file('c:/Temp/not_validados.csv', data_metrics.all_items_not_validados)
     # df_all_l = pd.DataFrame(data_metrics.all_loja_online)
@@ -807,6 +834,73 @@ def update_migration_status(item_component_name, state_field_value, connection):
 
 
 # Função para criar um item na lista do SharePoint
+
+
+def import_list_itens(items, connection):
+    field_af = HEADER_SHAREPOINT[FIELD_AF]
+    field_tech = HEADER_SHAREPOINT[FIELD_TECH]
+    field_classif = HEADER_SHAREPOINT[FIELD_CLASSIF]
+    field_url_repo = HEADER_SHAREPOINT[FIELD_URL_REPO]
+    current_date = (datetime.now()).strftime("%d_%m_%Y")
+    errors_file_path = os.path.join(DATA_DIR_PATH, f'linhas_com_problemas_{current_date}.txt')
+    cont = 0
+    start_at = 0
+    for index, item in items.iterrows():
+        cont = cont + 1
+        connection.logger.info(f'lendo a linha: {cont}')
+        if cont >= start_at:
+            # Dados para criar um novo item
+            json_url_git = {
+                '__metadata': {
+                    'type': 'SP.FieldUrlValue'
+                },  # Substitua o NomeDaLista pelo nome da sua lista
+                'Url': item["UrldoGIT"]
+            }
+
+            if str(item[field_af]).strip() == "":
+                item.pop(field_af)
+            elif not str(item[field_af]).isdigit():
+                try:
+                    field_value = item[field_af]
+                    add_line_to_file(errors_file_path, f"{cont}\n{field_af}: {field_value}\n\n",
+                                               connection.logger)
+                    continue
+                except Exception as err:
+                    connection.logger.error(err)
+                    break
+
+            if str(item[field_tech]).strip() == "":
+                item[field_tech] = ""
+
+            if str(item[field_classif]).strip() == "":
+                item[field_classif] = ""
+
+            item[field_url_repo] = json_url_git
+
+            max_retries = 5
+            for retry in range(1, max_retries + 1):
+                connection.logger.info(f'processando a linha: {cont}')
+                try:
+                    create_sharepoint_list_item(item, connection=connection)
+                    break
+                except requests.exceptions.HTTPError as err:
+                    status_code = err.response.status_code
+                    if status_code == 503 or status_code == 403:
+                        connection.logger.error(
+                            f'Falha ao criar item. Erro {status_code}: {err}')
+                        if retry < max_retries:
+                            connection.logger.debug(f'Tentativa {retry} de {max_retries}...')
+                            connection.get_sharepoint_digest()
+                        else:
+                            connection.logger.error(
+                                f'Máximo de tentativas alcançadas. Falha ao criar item. {status_code}')
+                    else:
+                        connection.logger.error(f'Falha ao criar item. Erro {status_code}: {err}')
+                        sys.exit()
+            sleep(0.05)
+    connection.logger.info('Finalizado')
+
+
 def create_sharepoint_list_item(item, connection):
     # URL da API para criar um novo item na lista
     api_url = f"{connection.site_url}/_api/web/lists/getbytitle('{connection.list_name}')/items"
@@ -857,7 +951,9 @@ def generate_sharepoint_list_all_items_csv(csv_file_path, connection):
     connection.logger.debug(df_sharepoint.columns)
 
     df_sharepoint.to_csv(csv_file_path)
-    df_sharepoint.to_csv("c:/Temp/list_all_git_url.csv", columns=['UrldoGIT'])
+    # df_sharepoint.dir_sem_nome("c:/Temp/list_all_git_url.csv", columns=['UrldoGIT'])
+
+
 
     connection.logger.debug(csv_file_path + " gerado")
     dataMetrics.log_resume(True)
