@@ -73,7 +73,7 @@ def update_sharepoint_list_item_field2(item_id, update_field_name, update_field_
 
 
 def update_aux_filter_value(p_id, p_token, connection):
-    if p_id == -1:
+    if p_id != -1:
         try:
             max_retries = 5
             for retry in range(1, max_retries + 1):
@@ -106,6 +106,7 @@ def update_aux_filter_value(p_id, p_token, connection):
             connection.logger.error(err)
             return
         connection.logger.info("Campo atualizado com sucesso.")
+
 
 def update_diretor_value(p_id, p_token, connection):
     if p_id != -1:
@@ -142,6 +143,7 @@ def update_diretor_value(p_id, p_token, connection):
             return
         connection.logger.info("Campo atualizado com sucesso.")
 
+
 def update_acao_pos_revisao_value(p_id, p_token, connection):
     if p_id == -1:
         try:
@@ -176,6 +178,7 @@ def update_acao_pos_revisao_value(p_id, p_token, connection):
             connection.logger.error(err)
             return
         connection.logger.info("Campo atualizado com sucesso.")
+
 
 def update_email_ponto_focal(p_id, p_token, connection):
     if p_id == -1:
@@ -270,10 +273,11 @@ def generate_import_csv_file(p_path, p_list):
         v_df = pd.DataFrame(p_list)
         v_df.to_csv(p_path)
         v_df.to_csv(p_path,
-                    columns=["ID","Sistema_x0028_AF_x0029_Id","SistemaGitlab", "DiretoriadoOwner", "GerenciaSrdoOwner", "Owner",
-                              "Linguagem","Title","TipodeBuild","CIServer", "TipoFerramentaSCM_x0028_Controle",
-                              "DatadeAtualiza_x00e7__x00e3_o","UrldoGIT", "URLPipeline", "StatusdaMigra_x00e7__x00e3_o"])
-
+                    columns=["ID", "Sistema_x0028_AF_x0029_Id", "SistemaGitlab", "DiretoriadoOwner",
+                             "GerenciaSrdoOwner", "Owner",
+                             "Linguagem", "Title", "TipodeBuild", "CIServer", "TipoFerramentaSCM_x0028_Controle",
+                             "DatadeAtualiza_x00e7__x00e3_o", "UrldoGIT", "URLPipeline",
+                             "StatusdaMigra_x00e7__x00e3_o"])
 
 
 def check_hub_pagamentos_filter(url_value, item, data_metrics, connection):
@@ -290,7 +294,11 @@ def check_hub_pagamentos_filter(url_value, item, data_metrics, connection):
                 data_metrics.data_hub_pag.all_sanitizar.append(item)
             elif re.search('Migrar', it_acao):
                 data_metrics.data_hub_pag.all_migrar.append(item)
-        # update_aux_filter_value(aux_id, 'HUB_PAGAMENTO', connection)
+        aux = item.get('aux_filter_data')
+        if aux is None:
+            aux = ""
+        if aux == "":
+            update_aux_filter_value(aux_id, 'HUB_PAGAMENTO', connection)
 
 
 def check_b2b_filter(url_value, item, data_metrics, connection):
@@ -321,8 +329,6 @@ def check_b2b_filter(url_value, item, data_metrics, connection):
                             data_metrics.data_b2b.all_sanitizar.append(item)
                         elif re.search('Migrar', it_acao):
                             data_metrics.data_b2b.all_migrar.append(item)
-
-            # update_aux_filter_value(aux_id, 'HUB_PAGAMENTO', connection)
 
 
 def check_loja_online_filter(url_value, item, df_loja, data_metrics, connection):
@@ -368,34 +374,48 @@ def integracao_data_metrics_update(item, data_metrics, connection):
 
 def check_integracao_dip_filter(url_value, item, data_metrics, connection):
     aux_id = item.get('ID')
-    validado = item.get('VALIDADO')
+    update = False
+    aux = item.get('aux_filter_data')
+    if aux is None:
+        aux = ""
+    if aux == "":
+        update = True
     if re.search('https://gitlab.redecorp.br/business-partner-domain', url_value):
         integracao_data_metrics_update(item, data_metrics, connection)
-        # update_aux_filter_value(aux_id, 'DIP-Business-Partner-Domain', connection)
+        if update:
+            update_aux_filter_value(aux_id, 'DIP-Business-Partner-Domain', connection)
     elif re.search('https://gitlab.redecorp.br/common-domain', url_value):
         integracao_data_metrics_update(item, data_metrics, connection)
-        # update_aux_filter_value(aux_id, 'DIP-Common-Domain', connection)
+        if update:
+            update_aux_filter_value(aux_id, 'DIP-Common-Domain', connection)
     elif re.search('https://gitlab.redecorp.br/customer-domain', url_value):
         integracao_data_metrics_update(item, data_metrics, connection)
-        # update_aux_filter_value(aux_id, 'DIP-Customer-Domain', connection)
+        if update:
+            update_aux_filter_value(aux_id, 'DIP-Customer-Domain', connection)
     elif re.search('https://gitlab.redecorp.br/enterprise-domain', url_value):
         integracao_data_metrics_update(item, data_metrics, connection)
-        # update_aux_filter_value(aux_id, 'DIP-Enterprise-Domain', connection)
+        if update:
+            update_aux_filter_value(aux_id, 'DIP-Enterprise-Domain', connection)
     elif re.search('https://gitlab.redecorp.br/integration-domain', url_value):
         integracao_data_metrics_update(item, data_metrics, connection)
-        # update_aux_filter_value(aux_id, 'DIP-Integration-Domain', connection)
+        if update:
+            update_aux_filter_value(aux_id, 'DIP-Integration-Domain', connection)
     elif re.search('https://gitlab.redecorp.br/market-sales-domain', url_value):
         integracao_data_metrics_update(item, data_metrics, connection)
-        # update_aux_filter_value(aux_id, 'DIP-Market-Sales-Domain', connection)
+        if update:
+            update_aux_filter_value(aux_id, 'DIP-Market-Sales-Domain', connection)
     elif re.search('https://gitlab.redecorp.br/product-domain', url_value):
         integracao_data_metrics_update(item, data_metrics, connection)
-        # update_aux_filter_value(aux_id, 'DIP-Product-Domain', connection)
+        if update:
+            update_aux_filter_value(aux_id, 'DIP-Product-Domain', connection)
     elif re.search('https://gitlab.redecorp.br/resource-domain', url_value):
         integracao_data_metrics_update(item, data_metrics, connection)
-        # update_aux_filter_value(aux_id, 'DIP-Resource-Domain', connection)
+        if update:
+            update_aux_filter_value(aux_id, 'DIP-Resource-Domain', connection)
     elif re.search('https://gitlab.redecorp.br/service-domain', url_value):
         integracao_data_metrics_update(item, data_metrics, connection)
-        # update_aux_filter_value(aux_id, 'DIP-Service-Domain', connection)
+        if update:
+            update_aux_filter_value(aux_id, 'DIP-Service-Domain', connection)
     # elif re.search('https://gitlab.redecorp.br/osb', url_value):
     #    integracao_data_metrics_update(item, data_metrics, connection)
     # update_aux_filter_value(aux_id, 'OSB', connection)
@@ -412,7 +432,6 @@ def check_integracao_dip_filter(url_value, item, data_metrics, connection):
 
 def check_4t_url(url_value, item, data_metrics, connection):
     aux_id = item.get('ID')
-
     is_4t = False
     if re.search('https://gitlab.redecorp.br/framework-brasil', url_value):
         is_4t = True
@@ -424,8 +443,12 @@ def check_4t_url(url_value, item, data_metrics, connection):
         is_4t = True
     elif re.search('https://gitlab.redecorp.br/MicroServicosMeuVivo', url_value):
         is_4t = True
-   # if is_4t:
-   #     update_aux_filter_value(aux_id, '4T', connection)
+    if is_4t:
+        aux = item.get('aux_filter_data')
+        if aux is None:
+            aux = ""
+        if aux == "":
+            update_aux_filter_value(aux_id, '4T', connection)
 
 
 def check_4p_filter(url_value, item, data_metrics, connection):
@@ -446,7 +469,8 @@ def check_4p_filter(url_value, item, data_metrics, connection):
                 data_metrics.data_plataforma.all_sanitizar.append(item)
             elif re.search('Migrar', it_acao):
                 data_metrics.data_plataforma.all_migrar.append(item)
-    # check_4t_url(url_value, item, data_metrics, connection)
+    else:
+        check_4t_url(url_value, item, data_metrics, connection)
 
 
 def check_diretor_filter(url_value, item, data_metrics, connection):
@@ -650,12 +674,14 @@ def export_csv_revisados(data_metrics, connection):
     file_name = path_vivo + "revisados_plataforma_4P_" + data_str + "_" + hora_str + ".csv"
     generate_csv_file(file_name, data_metrics.data_plataforma.all_validados)
 
+
 def export_csv_imported(data_metrics, connection):
     data_str = datetime.today().strftime('%d_%m_%Y')
     hora_str = datetime.today().strftime('%H_%M_%S')
     path_vivo = "c:/vivo/"
     file_name = path_vivo + "dir_sem_nome_" + data_str + "_" + hora_str + ".csv"
     generate_import_csv_file(file_name, data_metrics.dir_sem_nome.all_items)
+
 
 def import_new_gitlab_itens(connection):
     df_new_itens = pd.read_csv('c:/Temp/novos_itens_ate_25_09_2023.csv')
@@ -675,9 +701,10 @@ def import_new_gitlab_itens(connection):
 
     print("FIM")
 
+
 def import_update_itens(connection):
-    df_new_itens = pd.read_csv('c:/vivo/import/4p/full3.csv',keep_default_na=False)
-    df_sharepoint = pd.read_csv("c:/Temp/list_all_git_url.csv",keep_default_na=False)
+    df_new_itens = pd.read_csv('c:/vivo/import/4p/full3.csv', keep_default_na=False)
+    df_sharepoint = pd.read_csv("c:/Temp/list_all_git_url.csv", keep_default_na=False)
     df_sharepoint.set_index('UrldoGIT', inplace=True)
     items_nof_found = []
     for index, item in df_new_itens.iterrows():
@@ -688,14 +715,15 @@ def import_update_itens(connection):
             items_nof_found.append(item)
     for index, item in df_new_itens.iterrows():
         p_id = item.get("ID")
-        if p_id not in [26505,26506,26507]:
-          update_row(p_id, item, connection)
+        if p_id not in [26505, 26506, 26507]:
+            update_row(p_id, item, connection)
     print("FIM")
 
-def import_update_diretor(connection):
-    df_new_itens = pd.read_csv('c:/vivo/import/devops_migração/atualizacao_de_itens_ate_26_09_2023.csv',keep_default_na=False)
-    df_sharepoint = pd.read_csv("c:/vivo/dir_sem_nome_27_09_2023_14_32_21.csv",keep_default_na=False)
 
+def import_update_diretor(connection):
+    df_new_itens = pd.read_csv('c:/vivo/import/devops_migração/atualizacao_de_itens_ate_26_09_2023.csv',
+                               keep_default_na=False)
+    df_sharepoint = pd.read_csv("c:/vivo/dir_sem_nome_27_09_2023_14_32_21.csv", keep_default_na=False)
 
     # df_sharepoint.set_index('ID', inplace=True)
     # id_not_found = []
@@ -704,8 +732,6 @@ def import_update_diretor(connection):
     #     result = df_new_itens.query("ID == @p_id")
     #     if len(result.index) <= 0:
     #         id_not_found.append(item)
-
-
 
     for index, item in df_new_itens.iterrows():
         p_id = item.get("ID")
@@ -992,7 +1018,7 @@ def import_list_itens(items, connection, isNew):
                 try:
                     field_value = item[field_af]
                     add_line_to_file(errors_file_path, f"{cont}\n{field_af}: {field_value}\n\n",
-                                               connection.logger)
+                                     connection.logger)
                     continue
                 except Exception as err:
                     connection.logger.error(err)
@@ -1011,7 +1037,7 @@ def import_list_itens(items, connection, isNew):
                 connection.logger.info(f'processando a linha: {cont}')
                 try:
                     if isNew:
-                      create_sharepoint_list_item(item, connection=connection)
+                        create_sharepoint_list_item(item, connection=connection)
 
                     else:
                         update_sharepoint_list_row(item, connection=connection)
@@ -1071,6 +1097,7 @@ def create_sharepoint_list_item(item, connection):
     else:
         response.raise_for_status()
 
+
 def update_sharepoint_list_row(row, connection):
     item_id = row.get("ID")
     if not str(item_id).isdigit():
@@ -1095,20 +1122,20 @@ def update_sharepoint_list_row(row, connection):
         },
     }
 
-    #"UrldoGIT": row.get("UrldoGIT"),
+    # "UrldoGIT": row.get("UrldoGIT"),
 
-    data.update({"SistemaGitlab" : row.get("SistemaGitlab"),
-                 "Linguagem" : row.get('Linguagem'),
-                 "TipodeBuild" : row.get("TipodeBuild"),
-                 "URLPipeline" : row.get("URLPipeline"),
-                 "A_x00e7__x00e3_oap_x00f3_sRevis_" : row.get("A_x00e7__x00e3_oap_x00f3_sRevis_"),
-                 "PontoFocaldaMigra_x00e7__x00e3_o" : row.get("PontoFocaldaMigra_x00e7__x00e3_o"),
-                 "Owner" : row.get("Owner"),
-                 "GerenciaSrdoOwner" : row.get("GerenciaSrdoOwner"),
-                 "DiretoriadoOwner" : row.get("DiretoriadoOwner"),
-                 "ORDEMPRIORIDADE" : row.get("ORDEMPRIORIDADE"),
-                 "VALIDADO" : "False",
-                 "OBSERVA_x00c7__x00d5_ES" : row.get("OBSERVA_x00c7__x00d5_ES") })
+    data.update({"SistemaGitlab": row.get("SistemaGitlab"),
+                 "Linguagem": row.get('Linguagem'),
+                 "TipodeBuild": row.get("TipodeBuild"),
+                 "URLPipeline": row.get("URLPipeline"),
+                 "A_x00e7__x00e3_oap_x00f3_sRevis_": row.get("A_x00e7__x00e3_oap_x00f3_sRevis_"),
+                 "PontoFocaldaMigra_x00e7__x00e3_o": row.get("PontoFocaldaMigra_x00e7__x00e3_o"),
+                 "Owner": row.get("Owner"),
+                 "GerenciaSrdoOwner": row.get("GerenciaSrdoOwner"),
+                 "DiretoriadoOwner": row.get("DiretoriadoOwner"),
+                 "ORDEMPRIORIDADE": row.get("ORDEMPRIORIDADE"),
+                 "VALIDADO": "False",
+                 "OBSERVA_x00c7__x00d5_ES": row.get("OBSERVA_x00c7__x00d5_ES")})
 
     response = requests.post(
         api_url, headers=headers, json=data, cookies=connection.cookies)
@@ -1121,6 +1148,7 @@ def update_sharepoint_list_row(row, connection):
         raise requests.exceptions.HTTPError(
             f"Falha ao atualizar o campo {update_field_name}. Erro {response.status_code}.",
             response=response)
+
 
 def update_row(p_id, item, connection):
     if p_id != -1:
@@ -1157,6 +1185,7 @@ def update_row(p_id, item, connection):
             return
         connection.logger.info("Campo atualizado com sucesso.")
 
+
 def update_row(p_id, vDiretor, connection):
     if p_id != -1:
         try:
@@ -1192,9 +1221,6 @@ def update_row(p_id, vDiretor, connection):
         connection.logger.info("Campo atualizado com sucesso.")
 
 
-
-
-
 def teste_resumo_csv(csv_file_path, connection):
     dataMetrics = DataMetrics(connection.logger)
     dataMetrics.log_resume(False)
@@ -1209,8 +1235,6 @@ def generate_sharepoint_list_all_items_csv(csv_file_path, connection):
 
     df_sharepoint.to_csv(csv_file_path)
     # df_sharepoint.dir_sem_nome("c:/Temp/list_all_git_url.csv", columns=['UrldoGIT'])
-
-
 
     connection.logger.debug(csv_file_path + " gerado")
     dataMetrics.log_resume(True)
