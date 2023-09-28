@@ -24,6 +24,8 @@ class DataMetrics:
         self.dir_nilson_franca = dir.DataDiretor('Nilson Franca Junior', 'sharepoint_list_dir_nilson_franca.csv', self.logger)
         self.dir_patricia_orn = dir.DataDiretor('Patricia Razzolini Orn', 'sharepoint_list_dir_patricia_orn.csv', self.logger)
         self.dir_tania_azevedo = dir.DataDiretor('Tania De Araujo Azevedo', 'sharepoint_list_dir_tania_azevedo.csv', self.logger)
+        self.dir_carla_beltrao = dir.DataDiretor('Carla Beltrão', 'sharepoint_list_dir_carla_beltrao.csv', self.logger)
+        self.dir_fabio_mori = dir.DataDiretor('Fabio Mori', 'sharepoint_list_dir_fabio_mori.csv', self.logger)
         self.dir_sem_nome = dir.DataDiretor('sem Nome', 'sharepoint_list_dir_sem_nome.csv',self.logger)
 
 
@@ -191,6 +193,69 @@ class DataMetrics:
 
         new_df = pd.DataFrame([new_row])
         name_file = self.FOLDER_EXPORT_DATA + "diario/diario_dir_tania_azevedo_" + data_str_file + "_" + hora_str_file + ".csv"
+        new_df.to_csv(name_file,
+                      columns=['data', 'hora', 'escopo', 'validados', '% Validado', 'pendentes', '% pendentes',
+                               'migrar', 'sanitizar'])
+
+        return new_df
+
+    def generate_resumo_dir_fabio_mori_csv(self, save_accumulated, data_now):
+
+        data_str = data_now.strftime('%d/%m/%Y')
+        hora_str = data_now.strftime('%H:%M:%S')
+        data_str_file = data_now.strftime('%d_%m_%Y')
+        hora_str_file = data_now.strftime('%H_%M_%S')
+
+        v_total = len(self.dir_fabio_mori.all_items)
+        v_validados = len(self.dir_fabio_mori.all_validados)
+        v_sanitizar = len(self.dir_fabio_mori.all_sanitizar)
+        v_migrar = len(self.dir_fabio_mori.all_migrar)
+        v_pendentes = v_total - v_validados
+
+        if v_total == 0:
+            v_percent_validados = 0
+            v_percent_pendentes = 0
+        else:
+            v_percent_validados = (v_validados * 100) / v_total
+            v_percent_pendentes = (v_pendentes * 100) / v_total
+        new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados,
+                   '% Validado': v_percent_validados,
+                   'pendentes': v_pendentes, '% pendentes': v_percent_pendentes, 'migrar': v_migrar,
+                   'sanitizar': v_sanitizar}
+
+        new_df = pd.DataFrame([new_row])
+        name_file = self.FOLDER_EXPORT_DATA + "diario/diario_dir_fabio_mori_" + data_str_file + "_" + hora_str_file + ".csv"
+        new_df.to_csv(name_file,
+                      columns=['data', 'hora', 'escopo', 'validados', '% Validado', 'pendentes', '% pendentes',
+                               'migrar', 'sanitizar'])
+
+        return new_df
+    def generate_resumo_dir_carla_beltrao_csv(self, save_accumulated, data_now):
+
+        data_str = data_now.strftime('%d/%m/%Y')
+        hora_str = data_now.strftime('%H:%M:%S')
+        data_str_file = data_now.strftime('%d_%m_%Y')
+        hora_str_file = data_now.strftime('%H_%M_%S')
+
+        v_total = len(self.dir_carla_beltrao.all_items)
+        v_validados = len(self.dir_carla_beltrao.all_validados)
+        v_sanitizar = len(self.dir_carla_beltrao.all_sanitizar)
+        v_migrar = len(self.dir_carla_beltrao.all_migrar)
+        v_pendentes = v_total - v_validados
+
+        if v_total == 0:
+            v_percent_validados = 0
+            v_percent_pendentes = 0
+        else:
+            v_percent_validados = (v_validados * 100) / v_total
+            v_percent_pendentes = (v_pendentes * 100) / v_total
+        new_row = {'data': data_str, 'hora': hora_str, 'escopo': v_total, 'validados': v_validados,
+                   '% Validado': v_percent_validados,
+                   'pendentes': v_pendentes, '% pendentes': v_percent_pendentes, 'migrar': v_migrar,
+                   'sanitizar': v_sanitizar}
+
+        new_df = pd.DataFrame([new_row])
+        name_file = self.FOLDER_EXPORT_DATA + "diario/diario_dir_carla_beltrao_" + data_str_file + "_" + hora_str_file + ".csv"
         new_df.to_csv(name_file,
                       columns=['data', 'hora', 'escopo', 'validados', '% Validado', 'pendentes', '% pendentes',
                                'migrar', 'sanitizar'])
@@ -815,6 +880,12 @@ class DataMetrics:
         df_tania_azevedo = self.generate_resumo_dir_tania_azevedo_csv(save_accumulated, data_now)
         df_tania_azevedo["Nome"] = "Tania De Araujo Azevedo"
 
+        df_carla_beltrao = self.generate_resumo_dir_carla_beltrao_csv(save_accumulated, data_now)
+        df_carla_beltrao["Nome"] = "Carla Beltrão"
+
+        df_fabio_mori = self.generate_resumo_dir_fabio_mori_csv(save_accumulated, data_now)
+        df_fabio_mori["Nome"] = "Fabio Mori"
+
         df_sem_nome = self.generate_resumo_dir_sem_nome_csv(save_accumulated, data_now)
         df_sem_nome["Nome"] = "Sem Nome"
 
@@ -831,6 +902,8 @@ class DataMetrics:
         df_diretor = pd.concat([df_diretor, df_nilson_franca], ignore_index=True)
         df_diretor = pd.concat([df_diretor, df_patricia_orn], ignore_index=True)
         df_diretor = pd.concat([df_diretor, df_tania_azevedo], ignore_index=True)
+        df_diretor = pd.concat([df_diretor, df_carla_beltrao], ignore_index=True)
+        df_diretor = pd.concat([df_diretor, df_fabio_mori], ignore_index=True)
         df_diretor = pd.concat([df_diretor, df_sem_nome], ignore_index=True)
 
 

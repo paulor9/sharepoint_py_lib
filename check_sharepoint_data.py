@@ -63,9 +63,11 @@ def main():
     logger = logging.getLogger(__name__)
     coloredlogs.install(level='DEBUG', logger=logger)
     connection = conn.Connection(logger)
-    # generate_sharepoint_list_all_items_csv(sharepoint_items_file_path, connection)
-    import_new_gitlab_itens(connection)
- #  teste_resumo_csv(sharepoint_items_file_path, connection)
+    generate_sharepoint_list_all_items_csv(sharepoint_items_file_path, connection)
+    # import_new_gitlab_itens(connection)
+    # import_update_itens(connection)
+  #  import_update_diretor(connection)
+    #  teste_resumo_csv(sharepoint_items_file_path, connection)
 
 
 if __name__ == "__main__":

@@ -107,6 +107,75 @@ def update_aux_filter_value(p_id, p_token, connection):
             return
         connection.logger.info("Campo atualizado com sucesso.")
 
+def update_diretor_value(p_id, p_token, connection):
+    if p_id != -1:
+        try:
+            max_retries = 5
+            for retry in range(1, max_retries + 1):
+                try:
+                    connection.get_sharepoint_digest()
+                    update_sharepoint_list_item_field2(item_id=p_id, update_field_name='DiretoriadoOwner',
+                                                       update_field_value=p_token, connection=connection)
+                    break
+                except requests.exceptions.HTTPError as err:
+                    status_code = err.response.status_code
+                    if status_code == 503 or status_code == 403:
+                        connection.logger.error(
+                            f"Falha ao atualizar o campo. Erro {status_code}.")
+                        connection.logger.error(err)
+                        if retry < max_retries:
+                            connection.logger.debug(
+                                f"Tentativa {retry} de {max_retries}...")
+                            connection.get_sharepoint_digest()
+                        else:
+                            connection.logger.error(
+                                f"Máximo de tentativas alcançadas. Falha ao atualizar o campo. Erro {status_code}."
+                            )
+                            return
+                    else:
+                        connection.logger.error(
+                            f"Falha ao Atualizar item. Erro {status_code}.")
+                        connection.logger.error(err)
+                        return
+        except Exception as err:
+            connection.logger.error(err)
+            return
+        connection.logger.info("Campo atualizado com sucesso.")
+
+def update_acao_pos_revisao_value(p_id, p_token, connection):
+    if p_id == -1:
+        try:
+            max_retries = 5
+            for retry in range(1, max_retries + 1):
+                try:
+                    connection.get_sharepoint_digest()
+                    update_sharepoint_list_item_field2(item_id=p_id, update_field_name='StatusdaMigra_x00e7__x00e3_o',
+                                                       update_field_value=p_token, connection=connection)
+                    break
+                except requests.exceptions.HTTPError as err:
+                    status_code = err.response.status_code
+                    if status_code == 503 or status_code == 403:
+                        connection.logger.error(
+                            f"Falha ao atualizar o campo. Erro {status_code}.")
+                        connection.logger.error(err)
+                        if retry < max_retries:
+                            connection.logger.debug(
+                                f"Tentativa {retry} de {max_retries}...")
+                            connection.get_sharepoint_digest()
+                        else:
+                            connection.logger.error(
+                                f"Máximo de tentativas alcançadas. Falha ao atualizar o campo. Erro {status_code}."
+                            )
+                            return
+                    else:
+                        connection.logger.error(
+                            f"Falha ao Atualizar item. Erro {status_code}.")
+                        connection.logger.error(err)
+                        return
+        except Exception as err:
+            connection.logger.error(err)
+            return
+        connection.logger.info("Campo atualizado com sucesso.")
 
 def update_email_ponto_focal(p_id, p_token, connection):
     if p_id == -1:
@@ -355,8 +424,8 @@ def check_4t_url(url_value, item, data_metrics, connection):
         is_4t = True
     elif re.search('https://gitlab.redecorp.br/MicroServicosMeuVivo', url_value):
         is_4t = True
-    if is_4t:
-        update_aux_filter_value(aux_id, '4T', connection)
+   # if is_4t:
+   #     update_aux_filter_value(aux_id, '4T', connection)
 
 
 def check_4p_filter(url_value, item, data_metrics, connection):
@@ -385,7 +454,7 @@ def check_diretor_filter(url_value, item, data_metrics, connection):
     aux_diretor = item.get('DiretoriadoOwner')
     if aux_diretor is None:
         aux_diretor = ""
-    aux_diretor = aux_diretor.upper()
+    aux_diretor = aux_diretor.upper().strip()
     validado = item.get('VALIDADO')
     if re.search('Adriana Lika Shimomura'.upper(), aux_diretor) or re.search('Adriana Lika'.upper(), aux_diretor):
         data_metrics.dir_adriana_lika.all_items.append(item)
@@ -409,6 +478,28 @@ def check_diretor_filter(url_value, item, data_metrics, connection):
                 data_metrics.dir_ana_lucia.all_sanitizar.append(item)
             elif re.search('Migrar', it_acao):
                 data_metrics.dir_ana_lucia.all_migrar.append(item)
+    elif re.search('Carla Beltrão'.upper(), aux_diretor):
+        data_metrics.dir_carla_beltrao.all_items.append(item)
+        if validado:
+            it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
+            data_metrics.dir_carla_beltrao.all_validados.append(item)
+            if it_acao is None:
+                it_acao = 'Migrar'
+            if re.search('Sanitizar', it_acao):
+                data_metrics.dir_carla_beltrao.all_sanitizar.append(item)
+            elif re.search('Migrar', it_acao):
+                data_metrics.dir_carla_beltrao.all_migrar.append(item)
+    elif re.search('Fabio Shigueo Mori'.upper(), aux_diretor):
+        data_metrics.dir_fabio_mori.all_items.append(item)
+        if validado:
+            it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
+            data_metrics.dir_fabio_mori.all_validados.append(item)
+            if it_acao is None:
+                it_acao = 'Migrar'
+            if re.search('Sanitizar', it_acao):
+                data_metrics.dir_fabio_mori.all_sanitizar.append(item)
+            elif re.search('Migrar', it_acao):
+                data_metrics.dir_fabio_mori.all_migrar.append(item)
     elif re.search('Andre Dias Vitor Santos'.upper(), aux_diretor):
         data_metrics.dir_andre_santos.all_items.append(item)
         if validado:
@@ -486,7 +577,7 @@ def check_diretor_filter(url_value, item, data_metrics, connection):
                 data_metrics.dir_giuliano_recco.all_sanitizar.append(item)
             elif re.search('Migrar', it_acao):
                 data_metrics.dir_giuliano_recco.all_migrar.append(item)
-    elif re.search('LUIS FELIPE JACOBSEN'.upper(), aux_diretor):
+    elif re.search('Luis  Felipe  Jacobsen'.upper(), aux_diretor) or re.search('LUIS FELIPE JACOBSEN', aux_diretor):
         data_metrics.dir_luis_jacobsen.all_items.append(item)
         if validado:
             it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
@@ -580,8 +671,46 @@ def import_new_gitlab_itens(connection):
             items_conflito.append(item)
             sem_conflito = False
     if sem_conflito:
-        import_list_itens(df_new_itens, connection)
+        import_list_itens(df_new_itens, connection, True)
 
+    print("FIM")
+
+def import_update_itens(connection):
+    df_new_itens = pd.read_csv('c:/vivo/import/4p/full3.csv',keep_default_na=False)
+    df_sharepoint = pd.read_csv("c:/Temp/list_all_git_url.csv",keep_default_na=False)
+    df_sharepoint.set_index('UrldoGIT', inplace=True)
+    items_nof_found = []
+    for index, item in df_new_itens.iterrows():
+        urldoGIT = item.get("UrldoGIT")
+        result = df_sharepoint.query("UrldoGIT == @urldoGIT")
+        if len(result.index) <= 0:
+            print("URL GIT não existente " + urldoGIT)
+            items_nof_found.append(item)
+    for index, item in df_new_itens.iterrows():
+        p_id = item.get("ID")
+        if p_id not in [26505,26506,26507]:
+          update_row(p_id, item, connection)
+    print("FIM")
+
+def import_update_diretor(connection):
+    df_new_itens = pd.read_csv('c:/vivo/import/devops_migração/atualizacao_de_itens_ate_26_09_2023.csv',keep_default_na=False)
+    df_sharepoint = pd.read_csv("c:/vivo/dir_sem_nome_27_09_2023_14_32_21.csv",keep_default_na=False)
+
+
+    # df_sharepoint.set_index('ID', inplace=True)
+    # id_not_found = []
+    # for index, item in df_sharepoint.iterrows():
+    #     p_id = index
+    #     result = df_new_itens.query("ID == @p_id")
+    #     if len(result.index) <= 0:
+    #         id_not_found.append(item)
+
+
+
+    for index, item in df_new_itens.iterrows():
+        p_id = item.get("ID")
+        diretor = item.get("DiretoriadoOwner")
+        update_diretor_value(p_id, diretor, connection)
     print("FIM")
 
 
@@ -836,7 +965,7 @@ def update_migration_status(item_component_name, state_field_value, connection):
 # Função para criar um item na lista do SharePoint
 
 
-def import_list_itens(items, connection):
+def import_list_itens(items, connection, isNew):
     field_af = HEADER_SHAREPOINT[FIELD_AF]
     field_tech = HEADER_SHAREPOINT[FIELD_TECH]
     field_classif = HEADER_SHAREPOINT[FIELD_CLASSIF]
@@ -881,8 +1010,13 @@ def import_list_itens(items, connection):
             for retry in range(1, max_retries + 1):
                 connection.logger.info(f'processando a linha: {cont}')
                 try:
-                    create_sharepoint_list_item(item, connection=connection)
+                    if isNew:
+                      create_sharepoint_list_item(item, connection=connection)
+
+                    else:
+                        update_sharepoint_list_row(item, connection=connection)
                     break
+
                 except requests.exceptions.HTTPError as err:
                     status_code = err.response.status_code
                     if status_code == 503 or status_code == 403:
@@ -936,6 +1070,129 @@ def create_sharepoint_list_item(item, connection):
         connection.logger.info("Item criado com sucesso.")
     else:
         response.raise_for_status()
+
+def update_sharepoint_list_row(row, connection):
+    item_id = row.get("ID")
+    if not str(item_id).isdigit():
+        raise Exception(
+            f"Falha ao atualizar o row {item_id}. Id do item inválido.")
+
+    api_url = f"{connection.site_url}/_api/web/lists/getbytitle('{connection.list_name}')/items({item_id})"
+
+    # Cabeçalhos para a requisição POST
+    headers = {
+        "Accept": "application/json;odata=verbose",
+        "Content-Type": "application/json;odata=verbose",
+        "X-HTTP-Method": "MERGE",
+        "IF-MATCH": "*",
+        "X-RequestDigest": connection.digest_header,
+    }
+
+    # Dados para atualizar um novo item
+    data = {
+        "__metadata": {
+            "type": f"SP.Data.{connection.list_name_for_create}ListItem"
+        },
+    }
+
+    #"UrldoGIT": row.get("UrldoGIT"),
+
+    data.update({"SistemaGitlab" : row.get("SistemaGitlab"),
+                 "Linguagem" : row.get('Linguagem'),
+                 "TipodeBuild" : row.get("TipodeBuild"),
+                 "URLPipeline" : row.get("URLPipeline"),
+                 "A_x00e7__x00e3_oap_x00f3_sRevis_" : row.get("A_x00e7__x00e3_oap_x00f3_sRevis_"),
+                 "PontoFocaldaMigra_x00e7__x00e3_o" : row.get("PontoFocaldaMigra_x00e7__x00e3_o"),
+                 "Owner" : row.get("Owner"),
+                 "GerenciaSrdoOwner" : row.get("GerenciaSrdoOwner"),
+                 "DiretoriadoOwner" : row.get("DiretoriadoOwner"),
+                 "ORDEMPRIORIDADE" : row.get("ORDEMPRIORIDADE"),
+                 "VALIDADO" : "False",
+                 "OBSERVA_x00c7__x00d5_ES" : row.get("OBSERVA_x00c7__x00d5_ES") })
+
+    response = requests.post(
+        api_url, headers=headers, json=data, cookies=connection.cookies)
+
+    if response.status_code == 204:
+        connection.logger.info(
+            f"Campo {update_field_name} do item atualizado com sucesso. <{response.status_code}.>")
+    else:
+        connection.logger.error(response.text)
+        raise requests.exceptions.HTTPError(
+            f"Falha ao atualizar o campo {update_field_name}. Erro {response.status_code}.",
+            response=response)
+
+def update_row(p_id, item, connection):
+    if p_id != -1:
+        try:
+            max_retries = 5
+            for retry in range(1, max_retries + 1):
+                try:
+                    connection.get_sharepoint_digest()
+
+                    update_sharepoint_list_row(item, connection)
+                    break
+                except requests.exceptions.HTTPError as err:
+                    status_code = err.response.status_code
+                    if status_code == 503 or status_code == 403:
+                        connection.logger.error(
+                            f"Falha ao atualizar o campo. Erro {status_code}.")
+                        connection.logger.error(err)
+                        if retry < max_retries:
+                            connection.logger.debug(
+                                f"Tentativa {retry} de {max_retries}...")
+                            connection.get_sharepoint_digest()
+                        else:
+                            connection.logger.error(
+                                f"Máximo de tentativas alcançadas. Falha ao atualizar o campo. Erro {status_code}."
+                            )
+                            return
+                    else:
+                        connection.logger.error(
+                            f"Falha ao Atualizar item. Erro {status_code}.")
+                        connection.logger.error(err)
+                        return
+        except Exception as err:
+            connection.logger.error(err)
+            return
+        connection.logger.info("Campo atualizado com sucesso.")
+
+def update_row(p_id, vDiretor, connection):
+    if p_id != -1:
+        try:
+            max_retries = 5
+            for retry in range(1, max_retries + 1):
+                try:
+                    connection.get_sharepoint_digest()
+                    update_sharepoint_list_row(item, connection)
+                    break
+                except requests.exceptions.HTTPError as err:
+                    status_code = err.response.status_code
+                    if status_code == 503 or status_code == 403:
+                        connection.logger.error(
+                            f"Falha ao atualizar o campo. Erro {status_code}.")
+                        connection.logger.error(err)
+                        if retry < max_retries:
+                            connection.logger.debug(
+                                f"Tentativa {retry} de {max_retries}...")
+                            connection.get_sharepoint_digest()
+                        else:
+                            connection.logger.error(
+                                f"Máximo de tentativas alcançadas. Falha ao atualizar o campo. Erro {status_code}."
+                            )
+                            return
+                    else:
+                        connection.logger.error(
+                            f"Falha ao Atualizar item. Erro {status_code}.")
+                        connection.logger.error(err)
+                        return
+        except Exception as err:
+            connection.logger.error(err)
+            return
+        connection.logger.info("Campo atualizado com sucesso.")
+
+
+
 
 
 def teste_resumo_csv(csv_file_path, connection):
