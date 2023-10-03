@@ -755,6 +755,7 @@ def get_all_sharepoint_list_items(data_metrics, connection):
         col_found.append('False')
     df_lojaonline['FOUND'] = col_found
     df_lojaonline.to_csv('c:/Temp/loja_log1.csv')
+    df_acao_not_valided = []
     count = 0
     while True:
         response = requests.get(api_url, cookies=connection.cookies, headers=headers)
@@ -783,13 +784,20 @@ def get_all_sharepoint_list_items(data_metrics, connection):
                         data_metrics.all_items_migrar.append(item)
                 else:
                     data_metrics.all_items_not_validados.append(item)
+                    it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
+                    if it_acao is None:
+                      it_acao = ""
+                    if it_acao != "":
+                      df_acao_not_valided.append(item)
+
+
                 check_integracao_dip_filter(url_value, item, data_metrics, connection)
                 check_hub_pagamentos_filter(url_value, item, data_metrics, connection)
                 check_b2b_filter(url_value, item, data_metrics, connection)
                 check_loja_online_filter(url_value, item, df_lojaonline, data_metrics, connection)
                 check_4p_filter(url_value, item, data_metrics, connection)
                 check_diretor_filter(url_value, item, data_metrics, connection)
-            connection.logger.info(f"{count} itens processados.")
+                connection.logger.info(f"{count} itens processados.")
 
             # Check if more items are available
             next_link = response.json()["d"].get("__next")
@@ -804,6 +812,7 @@ def get_all_sharepoint_list_items(data_metrics, connection):
 
     export_csv_revisados(data_metrics, connection)
     export_csv_imported(data_metrics, connection)
+    generate_csv_file('c:/Temp/diego_lima.csv',df_acao_not_valided )
     generate_csv_file('c:/Temp/validados.csv', data_metrics.all_items_validados)
     generate_csv_file('c:/Temp/not_validados.csv', data_metrics.all_items_not_validados)
     # df_all_l = pd.DataFrame(data_metrics.all_loja_online)
