@@ -65,8 +65,8 @@ def main():
     connection = conn.Connection(logger)
     generate_sharepoint_list_all_items_csv(sharepoint_items_file_path, connection)
     # import_new_gitlab_itens(connection)
-   #  import_update_itens(connection)
-    # import_update_diretor(connection)
+    # import_update_itens(connection)
+    # import_update_status_migracao(connection)
     #  teste_resumo_csv(sharepoint_items_file_path, connection)
 
 

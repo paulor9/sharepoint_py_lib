@@ -143,7 +143,40 @@ def update_diretor_value(p_id, p_token, connection):
             return
         connection.logger.info("Campo atualizado com sucesso.")
 
-
+def update_status_migracao_value(p_id, p_token, connection):
+    if p_id != -1:
+        try:
+            max_retries = 5
+            for retry in range(1, max_retries + 1):
+                try:
+                    connection.get_sharepoint_digest()
+                    update_sharepoint_list_item_field2(item_id=p_id, update_field_name='StatusdaMigra_x00e7__x00e3_o',
+                                                       update_field_value=p_token, connection=connection)
+                    break
+                except requests.exceptions.HTTPError as err:
+                    status_code = err.response.status_code
+                    if status_code == 503 or status_code == 403:
+                        connection.logger.error(
+                            f"Falha ao atualizar o campo. Erro {status_code}.")
+                        connection.logger.error(err)
+                        if retry < max_retries:
+                            connection.logger.debug(
+                                f"Tentativa {retry} de {max_retries}...")
+                            connection.get_sharepoint_digest()
+                        else:
+                            connection.logger.error(
+                                f"Máximo de tentativas alcançadas. Falha ao atualizar o campo. Erro {status_code}."
+                            )
+                            return
+                    else:
+                        connection.logger.error(
+                            f"Falha ao Atualizar item. Erro {status_code}.")
+                        connection.logger.error(err)
+                        return
+        except Exception as err:
+            connection.logger.error(err)
+            return
+        connection.logger.info("Campo atualizado com sucesso.")
 def update_acao_pos_revisao_value(p_id, p_token, connection):
     if p_id == -1:
         try:
@@ -737,6 +770,17 @@ def import_update_diretor(connection):
         p_id = item.get("ID")
         diretor = item.get("DiretoriadoOwner")
         update_diretor_value(p_id, diretor, connection)
+    print("FIM")
+
+
+
+def import_update_status_migracao(connection):
+    df_new_itens = pd.read_csv('c:/vivo/import/devops_migração/onda_migracao_helm_02_10_2023.csv',
+                               keep_default_na=False)
+    for index, item in df_new_itens.iterrows():
+        p_id = item.get("ID_INVENTARIO")
+        v_status = "Pronto para Migrar"
+        update_status_migracao_value(p_id,v_status,connection)
     print("FIM")
 
 
