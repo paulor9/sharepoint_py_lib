@@ -32,10 +32,16 @@ class DataMetrics:
         self.data_loja_b2c = da.DataArea('Loja Online (B2C)', 'sharepoint_list_loja_online_b2c.csv', self.logger)
         self.data_b2b = da.DataArea('B2B', 'sharepoint_list_b2b.csv', self.logger)
         self.data_integra = da.DataArea('Integracoes', 'sharepoint_list_integra.csv', self.logger)
+        self.data_integra_all_api_gateway = da.DataArea('Integracoes all Api Gateway','sharepoint_list_integra_all_api.csv', self.logger)
+        self.data_integra_all_soa = da.DataArea('Integracoes all SOA', 'sharepoint_list_integra_all_soa.csv', self.logger)
+        self.data_integra_all_osb = da.DataArea('Integracoes all OSB', 'sharepoint_list_integra_all_osb.csv', self.logger)
+
+
+
         self.data_hub_pag = da.DataArea('Hub Pagamentos', 'sharepoint_list_hub_pag.csv', self.logger)
         self.data_plataforma = da.DataArea('Plataforma Digitais', 'sharepoint_list_4p.csv', self.logger)
         self.data_loja_b2b = da.DataArea('Loja Online (B2B)', 'sharepoint_list_loja_online_b2b.csv', self.logger)
-
+        self.data_oss = da.DataArea('OSS', 'sharepoint_list_oss.csv', self.logger)
 
 
 

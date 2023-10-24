@@ -108,6 +108,42 @@ def update_aux_filter_value(p_id, p_token, connection):
         connection.logger.info("Campo atualizado com sucesso.")
 
 
+def update_aux_filter2_value(p_id, p_token, connection):
+    if p_id != -1:
+        try:
+            max_retries = 5
+            for retry in range(1, max_retries + 1):
+                try:
+                    connection.get_sharepoint_digest()
+                    update_sharepoint_list_item_field2(item_id=p_id, update_field_name='aux_url_scm',
+                                                       update_field_value=p_token, connection=connection)
+                    break
+                except requests.exceptions.HTTPError as err:
+                    status_code = err.response.status_code
+                    if status_code == 503 or status_code == 403:
+                        connection.logger.error(
+                            f"Falha ao atualizar o campo. Erro {status_code}.")
+                        connection.logger.error(err)
+                        if retry < max_retries:
+                            connection.logger.debug(
+                                f"Tentativa {retry} de {max_retries}...")
+                            connection.get_sharepoint_digest()
+                        else:
+                            connection.logger.error(
+                                f"Máximo de tentativas alcançadas. Falha ao atualizar o campo. Erro {status_code}."
+                            )
+                            return
+                    else:
+                        connection.logger.error(
+                            f"Falha ao Atualizar item. Erro {status_code}.")
+                        connection.logger.error(err)
+                        return
+        except Exception as err:
+            connection.logger.error(err)
+            return
+        connection.logger.info("Campo atualizado com sucesso.")
+
+
 def update_diretor_value(p_id, p_token, connection):
     if p_id != -1:
         try:
@@ -143,6 +179,7 @@ def update_diretor_value(p_id, p_token, connection):
             return
         connection.logger.info("Campo atualizado com sucesso.")
 
+
 def update_status_migracao_value(p_id, p_token, connection):
     if p_id != -1:
         try:
@@ -177,8 +214,10 @@ def update_status_migracao_value(p_id, p_token, connection):
             connection.logger.error(err)
             return
         connection.logger.info("Campo atualizado com sucesso.")
+
+
 def update_acao_pos_revisao_value(p_id, p_token, connection):
-    if p_id == -1:
+    if p_id != -1:
         try:
             max_retries = 5
             for retry in range(1, max_retries + 1):
@@ -301,15 +340,13 @@ def generate_csv_file(p_path, p_list):
                              "Sistema_x0028_AF_x0029_Id"])
 
 
-def generate_import_csv_file(p_path, p_list):
+def generate_integracoes_all_api_gateway_csv_file(p_path, p_list):
     if p_list is not None and len(p_list) > 0:
         v_df = pd.DataFrame(p_list)
         v_df.to_csv(p_path)
         v_df.to_csv(p_path,
-                    columns=["ID", "Sistema_x0028_AF_x0029_Id", "SistemaGitlab", "DiretoriadoOwner",
-                             "GerenciaSrdoOwner", "Owner",
-                             "Linguagem", "Title", "TipodeBuild", "CIServer", "TipoFerramentaSCM_x0028_Controle",
-                             "DatadeAtualiza_x00e7__x00e3_o", "UrldoGIT", "URLPipeline",
+                    columns=["ID", "Sistema_x0028_AF_x0029_Id", "SistemaGitlab",
+                             "DatadeAtualiza_x00e7__x00e3_o", "UrldoGIT","A_x00e7__x00e3_oap_x00f3_sRevis_",
                              "StatusdaMigra_x00e7__x00e3_o"])
 
 
@@ -405,6 +442,278 @@ def integracao_data_metrics_update(item, data_metrics, connection):
             data_metrics.data_integra.all_migrar.append(item)
 
 
+def oss_data_metrics_update(item, data_metrics, connection):
+    validado = item.get('VALIDADO')
+    data_metrics.data_oss.all_items.append(item)
+    if validado:
+        it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
+        data_metrics.data_oss.all_validados.append(item)
+        if it_acao is None:
+            it_acao = 'Migrar'
+        if re.search('Sanitizar', it_acao):
+            data_metrics.data_oss.all_sanitizar.append(item)
+        elif re.search('Migrar', it_acao):
+            data_metrics.data_oss.all_migrar.append(item)
+
+
+def check_oss_filter(url_value, item, data_metrics, connection):
+    aux_id = item.get('ID')
+    update = False
+    url_value = url_value.upper()
+    aux = item.get('aux_filter_data')
+    if aux is None:
+        aux = ""
+    if aux == "":
+        update = True
+
+    update_all = False
+    aux_all = item.get('aux_url_scm')
+    if aux_all is None:
+        aux_all = ""
+    if aux_all == "":
+        update_all = True
+    if re.search('https://gitlab.redecorp.br/accessmanagement'.upper(), url_value.upper()):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_AccessManagement', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/BluePlanetInventory'.upper(), url_value.upper()):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_BluePlanetInventory', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/changemanagement'.upper(), url_value.upper()):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_ChangeManagement', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/diagnoseserviceproblem'.upper(), url_value.upper()):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_DiagnoseServiceProblem', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/esboss'.upper(), url_value.upper()):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_esboss', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/geniaus'.upper(), url_value.upper()):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_Geniaus', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/gsim'.upper(), url_value.upper()):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_Gsim', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/gvox'.upper(), url_value.upper()):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_Gvox', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/locationmanagement'.upper(), url_value.upper()):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_LocationManagement', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/NetworkReallocation'.upper(), url_value.upper()):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_NetworkReallocation', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/NumberInventory'.upper(), url_value.upper()):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_NumberInventory', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/odp'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_odp', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/resourceorder'.upper(), url_value.upper()):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_resourceorder', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/sigitmoss'.upper(), url_value.upper()):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_SigitmOSS', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/ossopenapis'.upper(), url_value.upper()):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_ossopenapis', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/oss-commons'.upper(), url_value.upper()):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_oss-commons', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/WorkforceManagement'.upper(), url_value.upper()):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_WorkforceManagement', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/wfm'.upper(), url_value.upper()):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_WFM', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/ResourceActivation'.upper(), url_value.upper()):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_ResourceActivation', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/resource-activation'.upper(), url_value.upper()):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_resource-activation', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/ResourceInventory'.upper(), url_value.upper()):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_ResourceInventory', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/resourceschemas'.upper(), url_value.upper()):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_ResourceSchemas', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/ResourceTest'.upper(), url_value.upper()):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_ResourceTest', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/scm'.upper(), url_value.upper()):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_SCM', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/scqla'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_SCQLA', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/serviceproblemmanagement'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_ServiceProblemManagement', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/servicetestmanagement'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_ServiceTestManagement', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/sigan'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_Sigan', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/sigitm-2'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_Sigitm-2', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/sigitm-3'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_Sigitm-3', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/sigres-portal'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_SIGRES_PORTAL', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/sigres-viewer'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_SIGRES_VIEWER', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/sigres-2'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_sigres-2', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/sigres-dm'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_sigres-dm', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/smtx'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_smtx', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/Star'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_Star', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/talc'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_Talc', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/TestSchemas'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_TestSchemas', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/TopologyInventory'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_TopologyInventory', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/oss'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_oss', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+
+
 def check_integracao_dip_filter(url_value, item, data_metrics, connection):
     aux_id = item.get('ID')
     update = False
@@ -449,18 +758,23 @@ def check_integracao_dip_filter(url_value, item, data_metrics, connection):
         integracao_data_metrics_update(item, data_metrics, connection)
         if update:
             update_aux_filter_value(aux_id, 'DIP-Service-Domain', connection)
-    # elif re.search('https://gitlab.redecorp.br/osb', url_value):
-    #    integracao_data_metrics_update(item, data_metrics, connection)
-    # update_aux_filter_value(aux_id, 'OSB', connection)
-
-
-# elif re.search('https://gitlab.redecorp.br/soa', url_value):
-#     integracao_data_metrics_update(item, data_metrics, connection)
-# update_aux_filter_value(aux_id, 'SOA', connection)
-# elif re.search('https://gitlab.redecorp.br/api-management/src-77', url_value):
-#     integracao_data_metrics_update(item, data_metrics, connection)
-
-# update_aux_filter_value(aux_id, 'API-Gateway', connection)
+    elif re.search('https://gitlab.redecorp.br/osb/', url_value):
+        integracao_data_metrics_update(item, data_metrics, connection)
+        data_metrics.data_integra_all_osb.all_items.append(item)
+        if update:
+            update_aux_filter_value(aux_id, 'OSB', connection)
+    elif re.search('https://gitlab.redecorp.br/soa/', url_value):
+        integracao_data_metrics_update(item, data_metrics, connection)
+        data_metrics.data_integra_all_soa.all_items.append(item)
+        if update:
+            update_aux_filter_value(aux_id, 'SOA', connection)
+    elif re.search('https://gitlab.redecorp.br/api-management/', url_value):
+        data_metrics.data_integra_all_api_gateway.all_items.append(item)
+        integracao_data_metrics_update(item, data_metrics, connection)
+        data_metrics.data_integra.all_items.append(item)
+        if re.search('https://gitlab.redecorp.br/api-management/src-77', url_value):
+            if update:
+                update_aux_filter_value(aux_id, 'API-Gateway', connection)
 
 
 def check_4t_url(url_value, item, data_metrics, connection):
@@ -708,16 +1022,19 @@ def export_csv_revisados(data_metrics, connection):
     generate_csv_file(file_name, data_metrics.data_plataforma.all_validados)
 
 
-def export_csv_imported(data_metrics, connection):
+def export_csv_integracoes_apis(data_metrics, connection):
     data_str = datetime.today().strftime('%d_%m_%Y')
     hora_str = datetime.today().strftime('%H_%M_%S')
-    path_vivo = "c:/vivo/"
-    file_name = path_vivo + "dir_sem_nome_" + data_str + "_" + hora_str + ".csv"
-    generate_import_csv_file(file_name, data_metrics.dir_sem_nome.all_items)
-
+    path_vivo = "c:/vivo/integracoes/"
+    file_name = path_vivo + "integracoes_all_api_gateway_" + data_str + "_" + hora_str + ".csv"
+    generate_integracoes_all_api_gateway_csv_file(file_name, data_metrics.data_integra_all_api_gateway.all_items)
+    file_name = path_vivo + "integracoes_all_osb_" + data_str + "_" + hora_str + ".csv"
+    generate_integracoes_all_api_gateway_csv_file(file_name, data_metrics.data_integra_all_osb.all_items)
+    file_name = path_vivo + "integracoes_all_soa_" + data_str + "_" + hora_str + ".csv"
+    generate_integracoes_all_api_gateway_csv_file(file_name, data_metrics.data_integra_all_soa.all_items)
 
 def import_new_gitlab_itens(connection):
-    df_new_itens = pd.read_csv('c:/Temp/novos_itens_ate_25_09_2023.csv')
+    df_new_itens = pd.read_csv('c:/vivo/import/devops_migração/novos_itens_ate_20_10_2023.csv')
     df_sharepoint = pd.read_csv("c:/Temp/list_all_git_url.csv")
     df_sharepoint.set_index('UrldoGIT', inplace=True)
     items_conflito = []
@@ -735,21 +1052,81 @@ def import_new_gitlab_itens(connection):
     print("FIM")
 
 
-def import_update_itens(connection):
-    df_new_itens = pd.read_csv('c:/vivo/import/4p/full3.csv', keep_default_na=False)
-    df_sharepoint = pd.read_csv("c:/Temp/list_all_git_url.csv", keep_default_na=False)
-    df_sharepoint.set_index('UrldoGIT', inplace=True)
-    items_nof_found = []
+def getUrlGit(itemData, df):
+    if itemData is None or itemData == "":
+        return False
+    else:
+        dfx = df.loc[df["URL_DO_SCM"] == itemData]
+        return len(dfx) > 0
+
+
+def diff_sharepoint_x_meg_itens(connection):
+    df_meg = pd.read_csv("c:/vivo/integracoes/todos_os_itens_ate_24_10_2023_meg.csv")
+    df_sharepoint = pd.read_csv("c:/vivo/integracoes/relatorio_gerencial_24_10_2023_08_55_47.csv")
+    items_conflito = []
+    for index, item in df_sharepoint.iterrows():
+        urldoGIT = item.get("URL_DO_SCM")
+        print(urldoGIT)
+        if not getUrlGit(urldoGIT, df_meg):
+            items_conflito.append(item)
+            id = item.get("ID")
+    print("FIM")
+
+def diff_meg_x_sharepoint_itens(connection):
+    df_meg = pd.read_csv("c:/vivo/integracoes/todos_os_itens_ate_24_10_2023_meg.csv")
+    df_sharepoint = pd.read_csv("c:/vivo/integracoes/relatorio_gerencial_24_10_2023_08_55_47.csv")
+    items_conflito = []
+    for index, item in df_meg.iterrows():
+        urldoGIT = item.get("URL_DO_SCM")
+        print(urldoGIT)
+        if not getUrlGit(urldoGIT, df_sharepoint):
+            items_conflito.append(item)
+            id = item.get("ID")
+
+    print("FIM")
+def diff_sharepoint_x_gitlab_itens(connection):
+    df_gitlab = pd.read_csv("c:/vivo/integracoes/gitlab.csv")
+    df_sharepoint = pd.read_csv("c:/vivo/integracoes/relatorio_gerencial_23_10_2023_14_57_34.csv")
+    items_conflito = []
+    for index, item in df_sharepoint.iterrows():
+        urldoGIT = item.get("URL_DO_SCM")
+        print(urldoGIT)
+        if not getUrlGit(urldoGIT, df_gitlab):
+            items_conflito.append(item)
+            id = item.get("ID")
+            aux_scm = item.get("aux_url_scm")
+            if aux_scm is None or aux_scm == "":
+                update_aux_filter2_value(id, "NOT_FOUND", connection)
+            else:
+                print("JA EXISTE aux_url_scm value " + aux_scm)
+
+    print("FIM")
+
+
+def diff_gitlab_x_sharepoint_itens(connection):
+    df_gitlab = pd.read_csv("c:/vivo/integracoes/gitlab.csv")
+    df_sharepoint = pd.read_csv("c:/vivo/integracoes/relatorio_gerencial_23_10_2023_14_57_34.csv")
+    items_conflito = []
+    for index, item in df_gitlab.iterrows():
+        urldoGIT = item.get("URL_DO_SCM")
+        print(urldoGIT)
+        if not getUrlGit(urldoGIT, df_sharepoint):
+            items_conflito.append(item)
+            id = item.get("ID")
+
+    print("FIM")
+
+
+def import_update_itens_integracao(connection):
+    df_new_itens = pd.read_csv('c:/vivo/integracoes/integracoes_all_soa_24_10_2023_12_18_13.csv', keep_default_na=False)
+    cont = 0
     for index, item in df_new_itens.iterrows():
-        urldoGIT = item.get("UrldoGIT")
-        result = df_sharepoint.query("UrldoGIT == @urldoGIT")
-        if len(result.index) <= 0:
-            print("URL GIT não existente " + urldoGIT)
-            items_nof_found.append(item)
-    for index, item in df_new_itens.iterrows():
+        cont = cont + 1
         p_id = item.get("ID")
-        if p_id not in [26505, 26506, 26507]:
-            update_row(p_id, item, connection)
+        print(str(p_id) + " " + str(cont) )
+        v_acao = item.get("A_x00e7__x00e3_oap_x00f3_sRevis_")
+        if v_acao is None or v_acao == "":
+          update_row_integracao(p_id, item, connection)
     print("FIM")
 
 
@@ -773,16 +1150,55 @@ def import_update_diretor(connection):
     print("FIM")
 
 
-
 def import_update_status_migracao(connection):
-    df_new_itens = pd.read_csv('c:/vivo/import/devops_migração/onda_migracao_helm_02_10_2023.csv',
+    df_new_itens = pd.read_csv('c:/vivo/import/devops_migração/onda_migracao_java_ms_trunkbased_02_10_2023.csv',
                                keep_default_na=False)
     for index, item in df_new_itens.iterrows():
         p_id = item.get("ID_INVENTARIO")
-        v_status = "Pronto para Migrar"
-        update_status_migracao_value(p_id,v_status,connection)
+        if p_id is not None:
+            v_status = "Pronto para Migrar"
+            update_status_migracao_value(p_id, v_status, connection)
     print("FIM")
 
+
+def getItemValue(itemData):
+    if itemData is None:
+        return ""
+    else:
+        return itemData
+
+
+def getItemAFValue(itemData, df_af):
+    if itemData is None or itemData == "":
+        return ""
+    else:
+        dfx = df_af.loc[df_af["ID"] == itemData]
+        return dfx.iloc[0]['NOME']
+
+def new_rel_Ger_item (item , df_af):
+    new_item = {}
+    new_item["ID"] = item.get("Id")
+    new_item["NOME_DO_COMPONENTE"] = getItemValue(item.get("Title"))
+    new_item["DESCRICAO_COMPONENTE"] = getItemValue(item.get("NomedoComponente"))
+    new_item["SIGLA_ARQ_FUTURO"] = getItemAFValue(getItemValue(item.get("Sistema_x0028_AF_x0029_Id")),df_af)
+    new_item["TIPO_DO_SCM"] = getItemValue(item.get("TipoFerramentaSCM_x0028_Controle"))
+    new_item["URL_DO_SCM"] = getItemValue(item.get("UrldoGIT"))
+    new_item["CRIACAO"] = getItemValue(item.get("Created"))
+    new_item["ATUALIZACAO"] = getItemValue(item.get("DatadeAtualiza_x00e7__x00e3_o"))
+    new_item["REPOSITORIO_DE_CI"] = getItemValue(item.get("CIServer"))
+    new_item["TECNOLOGIA"] = getItemValue(item.get("Linguagem"))
+    new_item["TIPO_DO_BUILD"] = getItemValue(item.get("TipodeBuild"))
+    new_item["URL_DO_PIPELINE"] = getItemValue(item.get("URLPipeline"))
+    new_item["ACAO_APOS_REVISAO"] = getItemValue(item.get("A_x00e7__x00e3_oap_x00f3_sRevis_"))
+    new_item["EMAIL_PONTO_FOCAL_MIGRACAO"] = getItemValue(item.get("PontoFocaldaMigra_x00e7__x00e3_o"))
+    new_item["OWNER"] = getItemValue(item.get("Owner"))
+    new_item["GERENCIA_SR_DO_OWNER"] = getItemValue(item.get("GerenciaSrdoOwner"))
+    new_item["DIRETORIA_DO_OWNER"] = getItemValue(item.get("DiretoriadoOwner"))
+    new_item["OBSERVACOES"] = getItemValue(item.get("OBSERVA_x00c7__x00d5_ES"))
+    new_item["VALIDADO"] = getItemValue(item.get("VALIDADO"))
+    new_item["SISTEMA_GITLAB"] = getItemValue(item.get("SistemaGitlab"))
+    new_item["STATUS_MIGRACAO"] = getItemValue(item.get("StatusdaMigra_x00e7__x00e3_o"))
+    return new_item
 
 def get_all_sharepoint_list_items(data_metrics, connection):
     api_url = f"{connection.site_url}/_api/web/lists/getbytitle('{connection.list_name}')/items"
@@ -791,22 +1207,16 @@ def get_all_sharepoint_list_items(data_metrics, connection):
         "accept": "application/json;odata=verbose",
         "X-RequestDigest": connection.digest_header
     }
-
-    df_lojaonline = pd.read_csv('c:/Temp/repositorios_loja_online_b2c.CSV')
-    col_found = []
-    tam = len(df_lojaonline)
-    for i in range(tam):
-        col_found.append('False')
-    df_lojaonline['FOUND'] = col_found
-    df_lojaonline.to_csv('c:/Temp/loja_log1.csv')
-    df_acao_not_valided = []
+    df_report_gerencial = pd.read_csv('c:/vivo/report/relatorio_consolidado_dados_migracao_format.csv')
+    df_af = pd.read_csv('c:/vivo/report/af_aplicacoes_id_para_nome_do_ic_11_10_2023 1.csv')
     count = 0
+    all_items = []
     while True:
-        response = requests.get(api_url, cookies=connection.cookies, headers=headers)
+        response1 = requests.get(api_url, cookies=connection.cookies, headers=headers)
         url_repo_internal_field = HEADER_SHAREPOINT[FIELD_URL_REPO]
 
-        if response.status_code == 200:
-            data = response.json()["d"]["results"]
+        if response1.status_code == 200:
+            data = response1.json()["d"]["results"]
             count += len(data)
             for item in data:
                 id = item['__metadata']['id']
@@ -814,51 +1224,37 @@ def get_all_sharepoint_list_items(data_metrics, connection):
                 if url_value is not None:
                     url_value = url_value["Url"]
                     item[url_repo_internal_field] = url_value
+                    all_items.append(item)
                 data_metrics.all_items.append(item)
-
-                validado = item.get('VALIDADO')
-                if validado:
-                    data_metrics.all_items_validados.append(item)
-                    it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
-                    if it_acao is None:
-                        it_acao = 'Migrar'
-                    if re.search('Sanitizar', it_acao):
-                        data_metrics.all_items_sanitizar.append(item)
-                    elif re.search('Migrar', it_acao):
-                        data_metrics.all_items_migrar.append(item)
-                else:
-                    data_metrics.all_items_not_validados.append(item)
-                    it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
-                    if it_acao is None:
-                      it_acao = ""
-                    if it_acao != "":
-                      df_acao_not_valided.append(item)
-
-
+                # check_oss_filter(url_value, item, data_metrics, connection)
                 check_integracao_dip_filter(url_value, item, data_metrics, connection)
-                check_hub_pagamentos_filter(url_value, item, data_metrics, connection)
-                check_b2b_filter(url_value, item, data_metrics, connection)
-                check_loja_online_filter(url_value, item, df_lojaonline, data_metrics, connection)
-                check_4p_filter(url_value, item, data_metrics, connection)
-                check_diretor_filter(url_value, item, data_metrics, connection)
-                connection.logger.info(f"{count} itens processados.")
-
-            # Check if more items are available
-            next_link = response.json()["d"].get("__next")
+                # check_hub_pagamentos_filter(url_value, item, data_metrics, connection)
+                # check_b2b_filter(url_value, item, data_metrics, connection)
+                # check_loja_online_filter(url_value, item, df_lojaonline, data_metrics, connection)
+                # check_4p_filter(url_value, item, data_metrics, connection)
+                # check_diretor_filter(url_value, item, data_metrics, connection)
+                connection.logger.info(f"{count} itens processados XXXX .")
+                new_item = new_rel_Ger_item (item, df_af )
+                df2 = pd.DataFrame.from_dict([new_item])
+                df_report_gerencial = pd.concat([df_report_gerencial, df2])
+                connection.logger.info(f"{count} itens processados XXXX .")
+            next_link = response1.json()["d"].get("__next")
             if next_link:
                 api_url = next_link
             else:
                 break
         else:
-            raise requests.exceptions.HTTPError(
-                f"Falha ao recuperar itens. {response.status_code}",
-                response=response)
-
+            raise requests.exceptions.HTTPError(f"Falha ao recuperar itens. {response.status_code}", response=response)
+    data_now = datetime.today()
+    data_str = data_now.strftime('%d_%m_%Y')
+    hora_str = data_now.strftime('%H_%M_%S')
+    name_file = "relatorio_gerencial_" + data_str + "_" + hora_str + ".csv"
+    df_report_gerencial.to_csv("c:/vivo/report/" + name_file)
     export_csv_revisados(data_metrics, connection)
-    export_csv_imported(data_metrics, connection)
-    generate_csv_file('c:/Temp/diego_lima.csv',df_acao_not_valided )
-    generate_csv_file('c:/Temp/validados.csv', data_metrics.all_items_validados)
-    generate_csv_file('c:/Temp/not_validados.csv', data_metrics.all_items_not_validados)
+    export_csv_integracoes_apis(data_metrics, connection)
+    # generate_csv_file('c:/Temp/diego_lima.csv', df_acao_not_valided)
+    # generate_csv_file('c:/Temp/validados.csv', data_metrics.all_items_validados)
+    # generate_csv_file('c:/Temp/not_validados.csv', data_metrics.all_items_not_validados)
     # df_all_l = pd.DataFrame(data_metrics.all_loja_online)
     list_not_in = []
     # list_all = df_lojaonline['URL_GIT'].tolist()
@@ -1203,7 +1599,49 @@ def update_sharepoint_list_row(row, connection):
             response=response)
 
 
-def update_row(p_id, item, connection):
+def update_integracao_row(row, connection):
+    item_id = row.get("ID")
+    if not str(item_id).isdigit():
+        raise Exception(
+            f"Falha ao atualizar o row {item_id}. Id do item inválido.")
+
+    api_url = f"{connection.site_url}/_api/web/lists/getbytitle('{connection.list_name}')/items({item_id})"
+
+    # Cabeçalhos para a requisição POST
+    headers = {
+        "Accept": "application/json;odata=verbose",
+        "Content-Type": "application/json;odata=verbose",
+        "X-HTTP-Method": "MERGE",
+        "IF-MATCH": "*",
+        "X-RequestDigest": connection.digest_header,
+    }
+
+    # Dados para atualizar um novo item
+    data = {
+        "__metadata": {
+            "type": f"SP.Data.{connection.list_name_for_create}ListItem"
+        },
+    }
+
+    obs = "Atualizado com autorização da gestão do time de integrações (por e-mail) "
+    data.update({"A_x00e7__x00e3_oap_x00f3_sRevis_": "Migrar",
+                 "VALIDADO": "False",
+                 "StatusdaMigra_x00e7__x00e3_o" : "",
+                 "OBSERVA_x00c7__x00d5_ES": obs})
+
+    response = requests.post(api_url, headers=headers, json=data, cookies=connection.cookies)
+
+    if response.status_code == 204:
+        connection.logger.info("item atualizado com sucesso. <{response.status_code}.>")
+    else:
+        connection.logger.error(response.text)
+        raise requests.exceptions.HTTPError(
+            f"Falha ao atualizar o campo {item_id}. Erro {response.status_code}.",
+            response=response)
+
+
+
+def update_row_integracao(p_id, item, connection):
     if p_id != -1:
         try:
             max_retries = 5
@@ -1211,7 +1649,7 @@ def update_row(p_id, item, connection):
                 try:
                     connection.get_sharepoint_digest()
 
-                    update_sharepoint_list_row(item, connection)
+                    update_integracao_row(item, connection)
                     break
                 except requests.exceptions.HTTPError as err:
                     status_code = err.response.status_code
@@ -1285,9 +1723,15 @@ def generate_sharepoint_list_all_items_csv(csv_file_path, connection):
     df_sharepoint = pd.DataFrame(get_all_sharepoint_list_items(dataMetrics, connection))
     connection.logger.debug(f'{len(df_sharepoint.index)} itens recuperados do sharepoint.')
     connection.logger.debug(df_sharepoint.columns)
+    cols = ["Sistema_x0028_AF_x0029_Id", "SistemaGitlab",
+            "DiretoriadoOwner", "GerenciaSrdoOwner",
+            "Owner", "Linguagem", "Title", "TipodeBuild",
+            "CIServer", "TipoFerramentaSCM_x0028_Controle",
+            "DatadeAtualiza_x00e7__x00e3_o", "UrldoGIT",
+            "URLPipeline", "StatusdaMigra_x00e7__x00e3_o"]
 
-    df_sharepoint.to_csv(csv_file_path)
-    # df_sharepoint.dir_sem_nome("c:/Temp/list_all_git_url.csv", columns=['UrldoGIT'])
+    df_sharepoint.to_csv(csv_file_path, columns=cols)
+    df_sharepoint.to_csv("c:/Temp/sharepoint_full_bck.csv")
 
     connection.logger.debug(csv_file_path + " gerado")
     dataMetrics.log_resume(True)
