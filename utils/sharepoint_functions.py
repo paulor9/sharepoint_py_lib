@@ -777,6 +777,27 @@ def check_integracao_dip_filter(url_value, item, data_metrics, connection):
                 update_aux_filter_value(aux_id, 'API-Gateway', connection)
 
 
+
+def check_qa_filter(url_value, item, data_metrics, connection):
+    aux_id = item.get('ID')
+    is_qa = False
+    if re.search('https://gitlab.redecorp.br/cenarios-qa-automacao/', url_value):
+        is_qa = True
+    elif re.search('https://gitlab.redecorp.br/framework-qa-automacao/', url_value):
+        is_qa = True
+    elif re.search('https://gitlab.redecorp.br/portalautomacao/', url_value):
+        is_qa = True
+    elif re.search('/src/src-test-', url_value):
+        is_qa = True
+    elif re.search('/testes/', url_value):
+        is_qa = True
+    if is_qa:
+        aux = item.get('aux_filter_data')
+        if aux is None:
+            aux = ""
+        if aux == "":
+            update_aux_filter_value(aux_id, 'QA', connection)
+
 def check_4t_url(url_value, item, data_metrics, connection):
     aux_id = item.get('ID')
     is_4t = False
@@ -1232,6 +1253,7 @@ def get_all_sharepoint_list_items(data_metrics, connection):
                 # check_b2b_filter(url_value, item, data_metrics, connection)
                 # check_loja_online_filter(url_value, item, df_lojaonline, data_metrics, connection)
                 # check_4p_filter(url_value, item, data_metrics, connection)
+                check_qa_filter(url_value, item, data_metrics, connection)
                 # check_diretor_filter(url_value, item, data_metrics, connection)
                 connection.logger.info(f"{count} itens processados XXXX .")
                 new_item = new_rel_Ger_item (item, df_af )
