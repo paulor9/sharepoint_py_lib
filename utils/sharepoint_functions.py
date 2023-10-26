@@ -1219,6 +1219,11 @@ def new_rel_Ger_item (item , df_af):
     new_item["VALIDADO"] = getItemValue(item.get("VALIDADO"))
     new_item["SISTEMA_GITLAB"] = getItemValue(item.get("SistemaGitlab"))
     new_item["STATUS_MIGRACAO"] = getItemValue(item.get("StatusdaMigra_x00e7__x00e3_o"))
+    new_item["TOKEN_FILTRO"] = getItemValue(item.get("aux_filter_data"))
+    status_gitlab = getItemValue(item.get("aux_url_scm"))
+    if status_gitlab is None or status_gitlab == "":
+        status_gitlab = "OK"
+    new_item["STATUS_GITLAB"] = status_gitlab
     return new_item
 
 def get_all_sharepoint_list_items(data_metrics, connection):
@@ -1253,7 +1258,7 @@ def get_all_sharepoint_list_items(data_metrics, connection):
                 # check_b2b_filter(url_value, item, data_metrics, connection)
                 # check_loja_online_filter(url_value, item, df_lojaonline, data_metrics, connection)
                 # check_4p_filter(url_value, item, data_metrics, connection)
-                check_qa_filter(url_value, item, data_metrics, connection)
+                # check_qa_filter(url_value, item, data_metrics, connection)
                 # check_diretor_filter(url_value, item, data_metrics, connection)
                 connection.logger.info(f"{count} itens processados XXXX .")
                 new_item = new_rel_Ger_item (item, df_af )
