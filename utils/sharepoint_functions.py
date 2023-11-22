@@ -1,7 +1,7 @@
 import requests
 import pandas as pd
 import re
-
+import numpy as np
 import sys
 
 from time import sleep
@@ -108,6 +108,43 @@ def update_aux_filter_value(p_id, p_token, connection):
         connection.logger.info("Campo atualizado com sucesso.")
 
 
+def update_aux_filter3_value(p_id, p_token, connection):
+    if p_id != -1:
+        try:
+            max_retries = 5
+            for retry in range(1, max_retries + 1):
+                try:
+                    connection.get_sharepoint_digest()
+                    update_sharepoint_list_item_field2(item_id=p_id, update_field_name='aux_token_3',
+                                                       update_field_value=p_token, connection=connection)
+                    break
+                except requests.exceptions.HTTPError as err:
+                    status_code = err.response.status_code
+                    if status_code == 503 or status_code == 403:
+                        connection.logger.error(
+                            f"Falha ao atualizar o campo. Erro {status_code}.")
+                        connection.logger.error(err)
+                        if retry < max_retries:
+                            connection.logger.debug(
+                                f"Tentativa {retry} de {max_retries}...")
+                            connection.get_sharepoint_digest()
+                        else:
+                            connection.logger.error(
+                                f"Máximo de tentativas alcançadas. Falha ao atualizar o campo. Erro {status_code}."
+                            )
+                            return
+                    else:
+                        connection.logger.error(
+                            f"Falha ao Atualizar item. Erro {status_code}.")
+                        connection.logger.error(err)
+                        return
+        except Exception as err:
+            connection.logger.error(err)
+            return
+        connection.logger.info("Campo atualizado com sucesso.")
+
+
+
 def update_aux_filter2_value(p_id, p_token, connection):
     if p_id != -1:
         try:
@@ -116,6 +153,42 @@ def update_aux_filter2_value(p_id, p_token, connection):
                 try:
                     connection.get_sharepoint_digest()
                     update_sharepoint_list_item_field2(item_id=p_id, update_field_name='aux_url_scm',
+                                                       update_field_value=p_token, connection=connection)
+                    break
+                except requests.exceptions.HTTPError as err:
+                    status_code = err.response.status_code
+                    if status_code == 503 or status_code == 403:
+                        connection.logger.error(
+                            f"Falha ao atualizar o campo. Erro {status_code}.")
+                        connection.logger.error(err)
+                        if retry < max_retries:
+                            connection.logger.debug(
+                                f"Tentativa {retry} de {max_retries}...")
+                            connection.get_sharepoint_digest()
+                        else:
+                            connection.logger.error(
+                                f"Máximo de tentativas alcançadas. Falha ao atualizar o campo. Erro {status_code}."
+                            )
+                            return
+                    else:
+                        connection.logger.error(
+                            f"Falha ao Atualizar item. Erro {status_code}.")
+                        connection.logger.error(err)
+                        return
+        except Exception as err:
+            connection.logger.error(err)
+            return
+        connection.logger.info("Campo atualizado com sucesso.")
+
+
+def update_aux_toke2_value(p_id, p_token, connection):
+    if p_id != -1:
+        try:
+            max_retries = 5
+            for retry in range(1, max_retries + 1):
+                try:
+                    connection.get_sharepoint_digest()
+                    update_sharepoint_list_item_field2(item_id=p_id, update_field_name='aux_token_2',
                                                        update_field_value=p_token, connection=connection)
                     break
                 except requests.exceptions.HTTPError as err:
@@ -223,7 +296,8 @@ def update_acao_pos_revisao_value(p_id, p_token, connection):
             for retry in range(1, max_retries + 1):
                 try:
                     connection.get_sharepoint_digest()
-                    update_sharepoint_list_item_field2(item_id=p_id, update_field_name='A_x00e7__x00e3_oap_x00f3_sRevis_',
+                    update_sharepoint_list_item_field2(item_id=p_id,
+                                                       update_field_name='A_x00e7__x00e3_oap_x00f3_sRevis_',
                                                        update_field_value=p_token, connection=connection)
                     break
                 except requests.exceptions.HTTPError as err:
@@ -355,9 +429,9 @@ def check_hub_pagamentos_filter(url_value, item, data_metrics, connection):
     validado = item.get('VALIDADO')
     if re.search('https://gitlab.redecorp.br/hubdepagamento', url_value):
         data_metrics.data_hub_pag.all_items.append(item)
+        it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
         if validado:
             data_metrics.data_hub_pag.all_validados.append(item)
-            it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
             if it_acao is None:
                 it_acao = 'Migrar'
             if re.search('Sanitizar', it_acao):
@@ -365,10 +439,20 @@ def check_hub_pagamentos_filter(url_value, item, data_metrics, connection):
             elif re.search('Migrar', it_acao):
                 data_metrics.data_hub_pag.all_migrar.append(item)
         aux = item.get('aux_filter_data')
+
         if aux is None:
             aux = ""
         if aux == "":
             update_aux_filter_value(aux_id, 'HUB_PAGAMENTO', connection)
+        v_aux_status_migracao = item.get("StatusdaMigra_x00e7__x00e3_o")
+        if v_aux_status_migracao is None:
+            v_aux_status_migracao = ""
+
+        if v_aux_status_migracao == "" or v_aux_status_migracao == "Pronto para Migrar":
+            if it_acao == "Migrar":
+                update_status_migracao_value(aux_id, "Migrado", connection)
+            elif it_acao == "Sanitizar":
+                update_status_migracao_value(aux_id, "Sanitizado", connection)
 
 
 def check_b2b_filter(url_value, item, data_metrics, connection):
@@ -712,6 +796,91 @@ def check_oss_filter(url_value, item, data_metrics, connection):
             update_aux_filter_value(aux_id, 'OSS_oss', connection)
         if update_all:
             update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/troubleticket'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_oss', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/troubleticket'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_OUTROD', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/sigres2'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_OUTROS', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/sigitm3'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_OUTROS', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/sigitmoss'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_OUTROS', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/sigitm'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_OUTROS', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/service-test-management'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_OUTROS', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/resource-inventory'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_OUTROS', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/number-inventory'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_OUTROS', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+
+    elif re.search('https://gitlab.redecorp.br/network-reallocation'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_OUTROS', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/location-management'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_OUTROS', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/diagnose-service-problem'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_OUTROS', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/diagnose-service-problem'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_OUTROS', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
+    elif re.search('https://gitlab.redecorp.br/network-reallocation'.upper(), url_value):
+        oss_data_metrics_update(item, data_metrics, connection)
+        if update:
+            update_aux_filter_value(aux_id, 'OSS_OUTROS', connection)
+        if update_all:
+            update_aux_filter2_value(aux_id, 'OSS_ALL', connection)
 
 
 def check_integracao_dip_filter(url_value, item, data_metrics, connection):
@@ -777,7 +946,7 @@ def check_integracao_dip_filter(url_value, item, data_metrics, connection):
         api_ok = True
     elif re.search('https://gitlab.redecorp.br/api-management-onprem-files/', url_value):
         api_ok = True
-    elif re.search('https://gitlab.redecorp.br/api-management-onprem-internal/', url_value):
+    elif re.search('https://gitlab.redecorp.br/api-management-onprem-external/', url_value):
         api_ok = True
     elif re.search('https://gitlab.redecorp.br/api-management-onprem-files/', url_value):
         api_ok = True
@@ -789,7 +958,10 @@ def check_integracao_dip_filter(url_value, item, data_metrics, connection):
         it_acao = item.get(HEADER_SHAREPOINT[FIELD_SANIT_POS])
         data_metrics.data_oss.all_validados.append(item)
         if it_acao is None:
+            it_acao = ""
+        if it_acao == "":
             update_acao_pos_revisao_value(aux_id, 'Migrar', connection)
+
 
 def check_qa_filter(url_value, item, data_metrics, connection):
     aux_id = item.get('ID')
@@ -800,16 +972,48 @@ def check_qa_filter(url_value, item, data_metrics, connection):
         is_qa = True
     elif re.search('https://gitlab.redecorp.br/portalautomacao/', url_value):
         is_qa = True
+    elif re.search('https://gitlab.redecorp.br/servicos-virtuais/', url_value):
+        is_qa = True
     elif re.search('/src/src-test-', url_value):
         is_qa = True
     elif re.search('/testes/', url_value):
         is_qa = True
+
     if is_qa:
         aux = item.get('aux_filter_data')
         if aux is None:
             aux = ""
         if aux == "":
             update_aux_filter_value(aux_id, 'QA', connection)
+
+
+def check_gps_filter(url_value, item, data_metrics, connection):
+    aux_id = item.get('ID')
+    is_conv = False
+    if re.search('https://gitlab.redecorp.br/conv86/', url_value):
+        is_conv = True
+    elif re.search('https://gitlab.redecorp.br/novoportalgf/', url_value):
+        is_conv = True
+    if is_conv:
+        aux = item.get('aux_filter_data')
+        if aux is None:
+            aux = ""
+        if aux == "":
+            update_aux_filter_value(aux_id, 'CONV86', connection)
+
+
+def check_conv86_filter(url_value, item, data_metrics, connection):
+    aux_id = item.get('ID')
+    is_gps = False
+    if re.search('https://gitlab.redecorp.br/gps2/', url_value):
+        is_gps = True
+
+    if is_gps:
+        aux = item.get('aux_filter_data')
+        if aux is None:
+            aux = ""
+        if aux == "":
+            update_aux_filter_value(aux_id, 'GPS', connection)
 
 
 def check_4t_url(url_value, item, data_metrics, connection):
@@ -1070,7 +1274,7 @@ def export_csv_integracoes_apis(data_metrics, connection):
 
 
 def import_new_gitlab_itens(connection):
-    df_new_itens = pd.read_csv('c:/vivo/import/devops_migração/novos_itens_ate_20_10_2023.csv')
+    df_new_itens = pd.read_csv('c:/vivo/import/devops_migração/novos_itens_ate_09_11_2023.csv')
     df_sharepoint = pd.read_csv("c:/Temp/list_all_git_url.csv")
     df_sharepoint.set_index('UrldoGIT', inplace=True)
     items_conflito = []
@@ -1096,6 +1300,55 @@ def getUrlGit(itemData, df):
         return len(dfx) > 0
 
 
+def is_qa_filter(url_value):
+    is_qa = False
+    if re.search('https://gitlab.redecorp.br/cenarios-qa-automacao/', url_value):
+        is_qa = True
+    elif re.search('https://gitlab.redecorp.br/framework-qa-automacao/', url_value):
+        is_qa = True
+    elif re.search('https://gitlab.redecorp.br/portalautomacao/', url_value):
+        is_qa = True
+    elif re.search('https://gitlab.redecorp.br/servicos-virtuais/', url_value):
+        is_qa = True
+    elif re.search('/src/src-test-', url_value):
+        is_qa = True
+    elif re.search('/testes/', url_value):
+        is_qa = True
+    return is_qa
+
+
+def getUrlGitItem(itemData, df):
+    dfx = df.loc[df["URL_DO_SCM"] == itemData]
+    return dfx
+
+
+def check_arquivo_massivo_test_qa(connection):
+    df_massivo = pd.read_csv("c:/vivo/import/massivo/oss_massivo1.csv", encoding='iso-8859-1')
+    df_filtro = pd.read_csv("c:/vivo/import/massivo/oss_massivo1.csv")
+    df_sharepoint = pd.read_csv("c:/vivo/import/massivo/relatorio_gerencial_31_10_2023_10_22_28.csv")
+    for index, item in df_filtro.iterrows():
+        urldoGIT = item.get("URL_DO_SCM")
+        print(urldoGIT)
+        if urldoGIT is not None and urldoGIT != "":
+            itsf = getUrlGitItem(urldoGIT, df_sharepoint)
+            for index2, item2 in itsf.iterrows():
+                id = str(int(item2.get("ID")))
+                update_aux_toke2_value(id, "S_MASSIVA", connection)
+                print(id)
+    cont_qa = 0
+    for index2, item2 in df_massivo.iterrows():
+        url = item2.get("URL_DO_SCM")
+        is_qa = is_qa_filter(url)
+        if is_qa:
+            cont_qa = cont_qa + 1
+            df_massivo.at[index2, 'IS_QA'] = 'TRUE'
+        else:
+            df_massivo.at[index2, 'IS_QA'] = 'FALSE'
+
+    df_massivo.to_csv("c:/vivo/import/massivo/massivo1_qa2.csv")
+    print("FIM")
+
+
 def diff_sharepoint_x_meg_itens(connection):
     df_meg = pd.read_csv("c:/vivo/integracoes/todos_os_itens_ate_24_10_2023_meg.csv")
     df_sharepoint = pd.read_csv("c:/vivo/integracoes/relatorio_gerencial_24_10_2023_08_55_47.csv")
@@ -1106,6 +1359,7 @@ def diff_sharepoint_x_meg_itens(connection):
         if not getUrlGit(urldoGIT, df_meg):
             items_conflito.append(item)
             id = item.get("ID")
+
     print("FIM")
 
 
@@ -1190,12 +1444,12 @@ def import_update_diretor(connection):
 
 
 def import_update_status_migracao(connection):
-    df_new_itens = pd.read_csv('c:/vivo/import/devops_migração/onda_migracao_java_ms_trunkbased_02_10_2023.csv',
-                               keep_default_na=False)
+    df_new_itens = pd.read_csv('c:/vivo/import/devops_migração/hub_sanitizados_2.csv',
+                               keep_default_na=False, encoding='iso-8859-1')
     for index, item in df_new_itens.iterrows():
-        p_id = item.get("ID_INVENTARIO")
+        p_id = item.get("ID")
         if p_id is not None:
-            v_status = "Pronto para Migrar"
+            v_status = "Sanitizado"
             update_status_migracao_value(p_id, v_status, connection)
     print("FIM")
 
@@ -1212,7 +1466,127 @@ def getItemAFValue(itemData, df_af):
         return ""
     else:
         dfx = df_af.loc[df_af["ID"] == itemData]
-        return dfx.iloc[0]['NOME']
+        if len(dfx) > 0:
+            return dfx.iloc[0]['NOME']
+        else:
+            return ""
+
+
+def getItemAFId(itemData, df_af):
+    if itemData is None or itemData == "":
+        return ""
+    else:
+        dfx = df_af.loc[df_af["NOME"] == itemData]
+        if len(dfx) > 0:
+            return dfx.iloc[0]['ID']
+        else:
+            return 0
+
+
+def import_update_gitlab_itens_oss_x(connection):
+    df_new_itens = pd.read_csv('c:/vivo/import/OSS/oss_ajustado.csv', encoding='iso-8859-1', keep_default_na=False)
+    df_sharepoint = pd.read_csv("c:/Temp/list_all_git_url.csv")
+    df_af = pd.read_csv('c:/vivo/report/af_aplicacoes_id_para_nome_do_ic_11_10_2023 1.csv')
+    df_sharepoint.set_index('UrldoGIT', inplace=True)
+    items_not_found = []
+    found_all = True
+    for index, item in df_new_itens.iterrows():
+        urldoGIT = item.get("UrldoGIT")
+        if urldoGIT is not None:
+            result = df_sharepoint.query("UrldoGIT == @urldoGIT")
+            if len(result.index) <= 0:
+                print("URL GIT not found " + urldoGIT)
+                items_not_found.append(item)
+                found_all = False
+            else:
+                af_cod = getItemAFId(getItemValue(item.get("Sistema_x0028_AF_x0029_Id")), df_af)
+                if af_cod is None or af_cod == '':
+                    af_cod = 0
+                item["Sistema_x0028_AF_x0029_Id"] = int(af_cod)
+                if item["TipodeBuild"] is None:
+                    item["TipodeBuild"] = ""
+            update_oss_row(item, connection)
+
+    print("FIM")
+
+
+def getById(itemData, df):
+    if itemData is None or itemData == "":
+        return False
+    else:
+        dfx = df.loc[df["ID"] == int(itemData)]
+        return len(dfx) > 0
+
+
+def import_update_gitlab_itens_oss(connection):
+    df_new_itens = pd.read_csv('c:/vivo/import/OSS/oss_ajustado.csv', encoding='iso-8859-1', keep_default_na=False)
+    df_sharepoint = pd.read_csv("c:/vivo/import/OSS/relatorio_gerencial_16_11_2023_10_42_43.csv")
+    df_af = pd.read_csv('c:/vivo/import/OSS/af_aplicacoes_id_para_nome_do_ic_11_10_2023 1.csv')
+    items_not_found = []
+    found_all = True
+    for index, item in df_new_itens.iterrows():
+        found_item = True
+        urldoGIT = item.get("UrldoGIT")
+        s_af = item.get("Sistema_x0028_AF_x0029_Id")
+        id_oss = item.get("ID")
+        if urldoGIT is not None and len(urldoGIT.strip()) > 0:
+            if not getById(id_oss, df_sharepoint):
+                print("URL GIT not found " + urldoGIT)
+                items_not_found.append(item)
+                found_all = False
+                found_item = False
+            else:
+                af_cod_int = -1
+                af_cod = getItemAFId(getItemValue(s_af), df_af)
+                if af_cod is None or af_cod == '':
+                    af_cod_int = -1
+                else:
+                    try:
+                        af_cod_int = int(af_cod)
+                    except ValueError:
+                        af_cod_int = -1
+                item["Sistema_x0028_AF_x0029_Id"] = af_cod_int
+                aux_acao = item.get("A_x00e7__x00e3_oap_x00f3_sRevis_")
+                if aux_acao is not None:
+                    aux_acao = aux_acao.strip()
+                item["A_x00e7__x00e3_oap_x00f3_sRevis_"] = aux_acao
+                if item["TipodeBuild"] is None:
+                    item["TipodeBuild"] = ""
+
+            try:
+                max_retries = 5
+                for retry in range(1, max_retries + 1):
+                    try:
+                        connection.get_sharepoint_digest()
+                        if found_item:
+                            update_oss_row(item, connection)
+                        break
+                    except requests.exceptions.HTTPError as err:
+                        status_code = err.response.status_code
+                        if status_code == 503 or status_code == 403:
+                            connection.logger.error(
+                                f"Falha ao atualizar o campo. Erro {status_code}.")
+                            connection.logger.error(err)
+                            if retry < max_retries:
+                                connection.logger.debug(
+                                    f"Tentativa {retry} de {max_retries}...")
+                                connection.get_sharepoint_digest()
+                            else:
+                                connection.logger.error(
+                                    f"Máximo de tentativas alcançadas. Falha ao atualizar o campo. Erro {status_code}."
+                                )
+                                return
+                        else:
+                            connection.logger.error(
+                                f"Falha ao Atualizar {urldoGIT}. Erro {status_code}.")
+                            connection.logger.error(err)
+                            return
+            except Exception as err:
+                connection.logger.error(err)
+                return
+            connection.logger.info(urldoGIT + "atualizada   com sucesso.")
+
+    print("FIM")
 
 
 def new_rel_Ger_item(item, df_af):
@@ -1253,7 +1627,7 @@ def get_all_sharepoint_list_items(data_metrics, connection):
         "accept": "application/json;odata=verbose",
         "X-RequestDigest": connection.digest_header
     }
-    df_report_gerencial = pd.read_csv('c:/vivo/report/relatorio_consolidado_dados_migracao_format.csv')
+    df_report_gerencial = pd.read_csv('c:/vivo/import/devops_migração/relatorio_consolidado_dados_migracao_format.csv')
     df_af = pd.read_csv('c:/vivo/report/af_aplicacoes_id_para_nome_do_ic_11_10_2023 1.csv')
     count = 0
     all_items = []
@@ -1272,14 +1646,16 @@ def get_all_sharepoint_list_items(data_metrics, connection):
                     item[url_repo_internal_field] = url_value
                     all_items.append(item)
                 data_metrics.all_items.append(item)
-                # check_oss_filter(url_value, item, data_metrics, connection)
+                check_oss_filter(url_value, item, data_metrics, connection)
                 check_integracao_dip_filter(url_value, item, data_metrics, connection)
-                # check_hub_pagamentos_filter(url_value, item, data_metrics, connection)
-                # check_b2b_filter(url_value, item, data_metrics, connection)
+                check_hub_pagamentos_filter(url_value, item, data_metrics, connection)
+                check_b2b_filter(url_value, item, data_metrics, connection)
                 # check_loja_online_filter(url_value, item, df_lojaonline, data_metrics, connection)
-                # check_4p_filter(url_value, item, data_metrics, connection)
-                # check_qa_filter(url_value, item, data_metrics, connection)
-                # check_diretor_filter(url_value, item, data_metrics, connection)
+                check_4p_filter(url_value, item, data_metrics, connection)
+                check_qa_filter(url_value, item, data_metrics, connection)
+                check_gps_filter(url_value, item, data_metrics, connection)
+                check_conv86_filter(url_value, item, data_metrics, connection)
+                check_diretor_filter(url_value, item, data_metrics, connection)
                 new_item = new_rel_Ger_item(item, df_af)
                 df2 = pd.DataFrame.from_dict([new_item])
                 df_report_gerencial = pd.concat([df_report_gerencial, df2])
@@ -1295,7 +1671,10 @@ def get_all_sharepoint_list_items(data_metrics, connection):
     data_str = data_now.strftime('%d_%m_%Y')
     hora_str = data_now.strftime('%H_%M_%S')
     name_file = "relatorio_gerencial_" + data_str + "_" + hora_str + ".csv"
-    df_report_gerencial.to_csv("c:/vivo/report/" + name_file)
+    cols = ["ID","NOME_DO_COMPONENTE","DESCRICAO_COMPONENTE","SIGLA_ARQ_FUTURO","TIPO_DO_SCM","URL_DO_SCM","CRIACAO","ATUALIZACAO","REPOSITORIO_DE_CI","TECNOLOGIA","TIPO_DO_BUILD",
+            "URL_DO_PIPELINE","ACAO_APOS_REVISAO","EMAIL_PONTO_FOCAL_MIGRACAO","OWNER","GERENCIA_SR_DO_OWNER","DIRETORIA_DO_OWNER","OBSERVACOES","VALIDADO","STATUS_MIGRACAO","STATUS_GITLAB",
+            "TOKEN_FILTRO","CRONOGRAMA"]
+    df_report_gerencial.to_csv("c:/vivo/report/" + name_file, columns=cols)
     export_csv_revisados(data_metrics, connection)
     export_csv_integracoes_apis(data_metrics, connection)
     # generate_csv_file('c:/Temp/diego_lima.csv', df_acao_not_valided)
@@ -1486,76 +1865,6 @@ def update_migration_status(item_component_name, state_field_value, connection):
 # Função para criar um item na lista do SharePoint
 
 
-def import_list_itens(items, connection, isNew):
-    field_af = HEADER_SHAREPOINT[FIELD_AF]
-    field_tech = HEADER_SHAREPOINT[FIELD_TECH]
-    field_classif = HEADER_SHAREPOINT[FIELD_CLASSIF]
-    field_url_repo = HEADER_SHAREPOINT[FIELD_URL_REPO]
-    current_date = (datetime.now()).strftime("%d_%m_%Y")
-    errors_file_path = os.path.join(DATA_DIR_PATH, f'linhas_com_problemas_{current_date}.txt')
-    cont = 0
-    start_at = 0
-    for index, item in items.iterrows():
-        cont = cont + 1
-        connection.logger.info(f'lendo a linha: {cont}')
-        if cont >= start_at:
-            # Dados para criar um novo item
-            json_url_git = {
-                '__metadata': {
-                    'type': 'SP.FieldUrlValue'
-                },  # Substitua o NomeDaLista pelo nome da sua lista
-                'Url': item["UrldoGIT"]
-            }
-
-            if str(item[field_af]).strip() == "":
-                item.pop(field_af)
-            elif not str(item[field_af]).isdigit():
-                try:
-                    field_value = item[field_af]
-                    add_line_to_file(errors_file_path, f"{cont}\n{field_af}: {field_value}\n\n",
-                                     connection.logger)
-                    continue
-                except Exception as err:
-                    connection.logger.error(err)
-                    break
-
-            if str(item[field_tech]).strip() == "":
-                item[field_tech] = ""
-
-            if str(item[field_classif]).strip() == "":
-                item[field_classif] = ""
-
-            item[field_url_repo] = json_url_git
-
-            max_retries = 5
-            for retry in range(1, max_retries + 1):
-                connection.logger.info(f'processando a linha: {cont}')
-                try:
-                    if isNew:
-                        create_sharepoint_list_item(item, connection=connection)
-
-                    else:
-                        update_sharepoint_list_row(item, connection=connection)
-                    break
-
-                except requests.exceptions.HTTPError as err:
-                    status_code = err.response.status_code
-                    if status_code == 503 or status_code == 403:
-                        connection.logger.error(
-                            f'Falha ao criar item. Erro {status_code}: {err}')
-                        if retry < max_retries:
-                            connection.logger.debug(f'Tentativa {retry} de {max_retries}...')
-                            connection.get_sharepoint_digest()
-                        else:
-                            connection.logger.error(
-                                f'Máximo de tentativas alcançadas. Falha ao criar item. {status_code}')
-                    else:
-                        connection.logger.error(f'Falha ao criar item. Erro {status_code}: {err}')
-                        sys.exit()
-            sleep(0.05)
-    connection.logger.info('Finalizado')
-
-
 def create_sharepoint_list_item(item, connection):
     # URL da API para criar um novo item na lista
     api_url = f"{connection.site_url}/_api/web/lists/getbytitle('{connection.list_name}')/items"
@@ -1645,8 +1954,88 @@ def update_sharepoint_list_row(row, connection):
             response=response)
 
 
+def update_oss_row(row, connection):
+    item_id = int(row.get("ID"))
+
+    if not str(item_id).isdigit():
+        raise Exception(
+            f"Falha ao atualizar o row {item_id}. Id do item inválido.")
+
+    api_url = f"{connection.site_url}/_api/web/lists/getbytitle('{connection.list_name}')/items({item_id})"
+
+    # Cabeçalhos para a requisição POST
+    headers = {
+        "Accept": "application/json;odata=verbose",
+        "Content-Type": "application/json;odata=verbose",
+        "X-HTTP-Method": "MERGE",
+        "IF-MATCH": "*",
+        "charset": "'iso-8859-1'",
+        "X-RequestDigest": connection.digest_header,
+    }
+
+    # Dados para atualizar um novo item
+    data = {
+        "__metadata": {
+            "type": f"SP.Data.{connection.list_name_for_create}ListItem"
+        },
+    }
+
+    # "UrldoGIT": row.get("UrldoGIT"),
+
+    v_af = row.get("Sistema_x0028_AF_x0029_Id")
+    has_af = False
+    if v_af is not None:
+        v_af_cod = int(v_af)
+        if v_af_cod > 0:
+            has_af = True
+    if has_af:
+        xdata = {"SistemaGitlab": row.get("SistemaGitlab"),
+                 "Linguagem": row.get('Linguagem'),
+                 "TipodeBuild": row.get("TipodeBuild"),
+                 "URLPipeline": row.get("URLPipeline"),
+                 "CIServer": row.get("CIServer"),
+                 "A_x00e7__x00e3_oap_x00f3_sRevis_": row.get("A_x00e7__x00e3_oap_x00f3_sRevis_"),
+                 "PontoFocaldaMigra_x00e7__x00e3_o": row.get("PontoFocaldaMigra_x00e7__x00e3_o"),
+                 "ICdoCMDB": row.get("ICdoCMDB"),
+                 "Sistema_x0028_AF_x0029_Id": int(row.get("Sistema_x0028_AF_x0029_Id")),
+                 "Owner": row.get("Owner"),
+                 "GerenciaSrdoOwner": row.get("GerenciaSrdoOwner"),
+                 "DiretoriadoOwner": row.get("DiretoriadoOwner"),
+                 "VALIDADO": "True",
+                 "OBSERVA_x00c7__x00d5_ES": row.get("OBSERVA_x00c7__x00d5_ES")}
+    else:
+        xdata = {"SistemaGitlab": row.get("SistemaGitlab"),
+                 "Linguagem": row.get('Linguagem'),
+                 "TipodeBuild": row.get("TipodeBuild"),
+                 "URLPipeline": row.get("URLPipeline"),
+                 "CIServer": row.get("CIServer"),
+                 "A_x00e7__x00e3_oap_x00f3_sRevis_": row.get("A_x00e7__x00e3_oap_x00f3_sRevis_"),
+                 "PontoFocaldaMigra_x00e7__x00e3_o": row.get("PontoFocaldaMigra_x00e7__x00e3_o"),
+                 "ICdoCMDB": row.get("ICdoCMDB"),
+                 "Owner": row.get("Owner"),
+                 "GerenciaSrdoOwner": row.get("GerenciaSrdoOwner"),
+                 "DiretoriadoOwner": row.get("DiretoriadoOwner"),
+                 "VALIDADO": "True",
+                 "OBSERVA_x00c7__x00d5_ES": row.get("OBSERVA_x00c7__x00d5_ES")}
+
+    data.update(xdata)
+
+    response = requests.post(
+        api_url, headers=headers, json=data, cookies=connection.cookies)
+
+    if response.status_code == 204:
+        connection.logger.info(
+            f"Campo {item_id} do item atualizado com sucesso. <{response.status_code}.>")
+    else:
+        connection.logger.error(response.text)
+        raise requests.exceptions.HTTPError(
+            f"Falha ao atualizar o   id {item_id}. Erro {response.status_code}.",
+            response=response)
+
+
 def update_integracao_row(row, connection):
     item_id = row.get("ID")
+    connection.logger.info("item {item_id}")
     if not str(item_id).isdigit():
         raise Exception(
             f"Falha ao atualizar o row {item_id}. Id do item inválido.")
