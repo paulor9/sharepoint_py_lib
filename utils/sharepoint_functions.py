@@ -144,7 +144,6 @@ def update_aux_filter3_value(p_id, p_token, connection):
         connection.logger.info("Campo atualizado com sucesso.")
 
 
-
 def update_aux_filter2_value(p_id, p_token, connection):
     if p_id != -1:
         try:
@@ -225,6 +224,42 @@ def update_diretor_value(p_id, p_token, connection):
                 try:
                     connection.get_sharepoint_digest()
                     update_sharepoint_list_item_field2(item_id=p_id, update_field_name='DiretoriadoOwner',
+                                                       update_field_value=p_token, connection=connection)
+                    break
+                except requests.exceptions.HTTPError as err:
+                    status_code = err.response.status_code
+                    if status_code == 503 or status_code == 403:
+                        connection.logger.error(
+                            f"Falha ao atualizar o campo. Erro {status_code}.")
+                        connection.logger.error(err)
+                        if retry < max_retries:
+                            connection.logger.debug(
+                                f"Tentativa {retry} de {max_retries}...")
+                            connection.get_sharepoint_digest()
+                        else:
+                            connection.logger.error(
+                                f"Máximo de tentativas alcançadas. Falha ao atualizar o campo. Erro {status_code}."
+                            )
+                            return
+                    else:
+                        connection.logger.error(
+                            f"Falha ao Atualizar item. Erro {status_code}.")
+                        connection.logger.error(err)
+                        return
+        except Exception as err:
+            connection.logger.error(err)
+            return
+        connection.logger.info("Campo atualizado com sucesso.")
+
+
+def update_cronograma_value(p_id, p_token, connection):
+    if p_id != -1:
+        try:
+            max_retries = 5
+            for retry in range(1, max_retries + 1):
+                try:
+                    connection.get_sharepoint_digest()
+                    update_sharepoint_list_item_field2(item_id=p_id, update_field_name='cronograma',
                                                        update_field_value=p_token, connection=connection)
                     break
                 except requests.exceptions.HTTPError as err:
@@ -447,12 +482,16 @@ def check_hub_pagamentos_filter(url_value, item, data_metrics, connection):
         v_aux_status_migracao = item.get("StatusdaMigra_x00e7__x00e3_o")
         if v_aux_status_migracao is None:
             v_aux_status_migracao = ""
+        if v_aux_status_migracao == "Migrado":
+            update_cronograma_value(aux_id, "01/11/2023", connection)
+        elif v_aux_status_migracao == "Sanitizado":
+            update_cronograma_value(aux_id, "02/11/2023", connection)
 
-        if v_aux_status_migracao == "" or v_aux_status_migracao == "Pronto para Migrar":
-            if it_acao == "Migrar":
-                update_status_migracao_value(aux_id, "Migrado", connection)
-            elif it_acao == "Sanitizar":
-                update_status_migracao_value(aux_id, "Sanitizado", connection)
+    #    if v_aux_status_migracao == "" or v_aux_status_migracao == "Pronto para Migrar":
+    #        if it_acao == "Migrar":
+    #            update_status_migracao_value(aux_id, "Migrado", connection)
+    #        elif it_acao == "Sanitizar":
+    #            update_status_migracao_value(aux_id, "Sanitizado", connection)
 
 
 def check_b2b_filter(url_value, item, data_metrics, connection):
@@ -539,6 +578,63 @@ def oss_data_metrics_update(item, data_metrics, connection):
         elif re.search('Migrar', it_acao):
             data_metrics.data_oss.all_migrar.append(item)
 
+
+def check_oss_other_filter(url_value, item, data_metrics, connection):
+    aux_id = item.get('ID')
+    url_value = url_value.upper()
+    aux = item.get('aux_token_3')
+    if aux is None:
+        aux = ""
+    if aux == "":
+        v_gitlab = item.get("SistemaGitlab")
+        if v_gitlab is None:
+            v_gitlab = ""
+        if v_gitlab == "SIGRES":
+            update_aux_filter_value(aux_id, 'OSS_OTHER', connection)
+        elif v_gitlab == "TELEFONICA":
+            update_aux_filter_value(aux_id, 'OSS_OTHER', connection)
+        elif v_gitlab == "NETCOOL-VIVO":
+            update_aux_filter_value(aux_id, 'OSS_OTHER', connection)
+        elif v_gitlab == "SCIENCE":
+            update_aux_filter_value(aux_id, 'OSS_OTHER', connection)
+        elif v_gitlab == "RESOURCE-ORDER":
+            update_aux_filter_value(aux_id, 'OSS_OTHER', connection)
+        elif v_gitlab == "TROUBLETICKET":
+            update_aux_filter_value(aux_id, 'OSS_OTHER', connection)
+        elif v_gitlab == "FSW11":
+            update_aux_filter_value(aux_id, 'OSS_OTHER', connection)
+        elif v_gitlab == "ROM-CAMUNDA":
+            update_aux_filter_value(aux_id, 'OSS_OTHER', connection)
+        elif v_gitlab == "PRUMA":
+             update_aux_filter_value(aux_id, 'OSS_OTHER', connection)
+        elif v_gitlab == "RM":
+            update_aux_filter_value(aux_id, 'OSS_OTHER', connection)
+        elif v_gitlab == "RESOURCE-TEST":
+            update_aux_filter_value(aux_id, 'OSS_OTHER', connection)
+        elif v_gitlab == "MANOBRA-GPON":
+            update_aux_filter_value(aux_id, 'OSS_OTHER', connection)
+        elif v_gitlab == "MANOBRA-UNIFICADA":
+            update_aux_filter_value(aux_id, 'OSS_OTHER', connection)
+        elif v_gitlab == "LM":
+            update_aux_filter_value(aux_id, 'OSS_OTHER', connection)
+        elif v_gitlab == "RESOURCE-SCHEMAS":
+            update_aux_filter_value(aux_id, 'OSS_OTHER', connection)
+        elif v_gitlab == "MANOBRA-ÚNICA":
+            update_aux_filter_value(aux_id, 'OSS_OTHER', connection)
+        elif v_gitlab == "OSSOPENAPIS":
+            update_aux_filter_value(aux_id, 'OSS_OTHER', connection)
+        elif v_gitlab == "LOCATIONMANAGEMENT":
+            update_aux_filter_value(aux_id, 'OSS_OTHER', connection)
+        elif v_gitlab == "SIGRES-MASSIVA":
+            update_aux_filter_value(aux_id, 'OSS_OTHER', connection)
+        elif v_gitlab == "ODP":
+            update_aux_filter_value(aux_id, 'OSS_OTHER', connection)
+        elif v_gitlab == "MONITOR-OSS":
+            update_aux_filter_value(aux_id, 'OSS_OTHER', connection)
+        elif v_gitlab == "BLUEPLANETINVENTORY":
+            update_aux_filter_value(aux_id, 'OSS_OTHER', connection)
+        elif v_gitlab == "SIGITM":
+            update_aux_filter_value(aux_id, 'OSS_OTHER', connection)
 
 def check_oss_filter(url_value, item, data_metrics, connection):
     aux_id = item.get('ID')
@@ -1035,6 +1131,21 @@ def check_4t_url(url_value, item, data_metrics, connection):
             aux = ""
         if aux == "":
             update_aux_filter_value(aux_id, '4T', connection)
+
+
+def check_rpa_filter(url_value, item, data_metrics, connection):
+    aux_id = item.get('ID')
+    is_rpa = False
+    if re.search('https://gitlab.redecorp.br/rpa-blue-prism/deploy/scr-', url_value):
+        is_rpa = True
+    elif re.search('https://gitlab.redecorp.br/rpa-blue-prism/deploy/deploy-', url_value):
+        is_rpa = True
+    if is_rpa:
+        aux = item.get('aux_filter_data')
+        if aux is None:
+            aux = ""
+        if aux == "":
+            update_aux_filter_value(aux_id, 'RPA-BLUE-PRISM-', connection)
 
 
 def check_4p_filter(url_value, item, data_metrics, connection):
@@ -1613,6 +1724,7 @@ def new_rel_Ger_item(item, df_af):
     new_item["SISTEMA_GITLAB"] = getItemValue(item.get("SistemaGitlab"))
     new_item["STATUS_MIGRACAO"] = getItemValue(item.get("StatusdaMigra_x00e7__x00e3_o"))
     new_item["TOKEN_FILTRO"] = getItemValue(item.get("aux_filter_data"))
+    new_item["CRONOGRAMA"] = getItemValue(item.get("cronograma"))
     status_gitlab = getItemValue(item.get("aux_url_scm"))
     if status_gitlab is None or status_gitlab == "":
         status_gitlab = "OK"
@@ -1647,15 +1759,17 @@ def get_all_sharepoint_list_items(data_metrics, connection):
                     all_items.append(item)
                 data_metrics.all_items.append(item)
                 check_oss_filter(url_value, item, data_metrics, connection)
+                check_oss_other_filter(url_value, item, data_metrics, connection)
                 check_integracao_dip_filter(url_value, item, data_metrics, connection)
-                check_hub_pagamentos_filter(url_value, item, data_metrics, connection)
+                # check_hub_pagamentos_filter(url_value, item, data_metrics, connection)
                 check_b2b_filter(url_value, item, data_metrics, connection)
                 # check_loja_online_filter(url_value, item, df_lojaonline, data_metrics, connection)
                 check_4p_filter(url_value, item, data_metrics, connection)
+                # check_rpa_filter(url_value, item, data_metrics, connection)
                 check_qa_filter(url_value, item, data_metrics, connection)
                 check_gps_filter(url_value, item, data_metrics, connection)
                 check_conv86_filter(url_value, item, data_metrics, connection)
-                check_diretor_filter(url_value, item, data_metrics, connection)
+                # check_diretor_filter(url_value, item, data_metrics, connection)
                 new_item = new_rel_Ger_item(item, df_af)
                 df2 = pd.DataFrame.from_dict([new_item])
                 df_report_gerencial = pd.concat([df_report_gerencial, df2])
@@ -1671,9 +1785,11 @@ def get_all_sharepoint_list_items(data_metrics, connection):
     data_str = data_now.strftime('%d_%m_%Y')
     hora_str = data_now.strftime('%H_%M_%S')
     name_file = "relatorio_gerencial_" + data_str + "_" + hora_str + ".csv"
-    cols = ["ID","NOME_DO_COMPONENTE","DESCRICAO_COMPONENTE","SIGLA_ARQ_FUTURO","TIPO_DO_SCM","URL_DO_SCM","CRIACAO","ATUALIZACAO","REPOSITORIO_DE_CI","TECNOLOGIA","TIPO_DO_BUILD",
-            "URL_DO_PIPELINE","ACAO_APOS_REVISAO","EMAIL_PONTO_FOCAL_MIGRACAO","OWNER","GERENCIA_SR_DO_OWNER","DIRETORIA_DO_OWNER","OBSERVACOES","VALIDADO","STATUS_MIGRACAO","STATUS_GITLAB",
-            "TOKEN_FILTRO","CRONOGRAMA"]
+    cols = ["ID", "SISTEMA_GITLAB", "NOME_DO_COMPONENTE", "DESCRICAO_COMPONENTE", "SIGLA_ARQ_FUTURO", "TIPO_DO_SCM",
+            "URL_DO_SCM", "CRIACAO", "ATUALIZACAO", "REPOSITORIO_DE_CI", "TECNOLOGIA", "TIPO_DO_BUILD",
+            "URL_DO_PIPELINE", "ACAO_APOS_REVISAO", "EMAIL_PONTO_FOCAL_MIGRACAO", "OWNER", "GERENCIA_SR_DO_OWNER",
+            "DIRETORIA_DO_OWNER", "OBSERVACOES", "VALIDADO", "STATUS_MIGRACAO", "STATUS_GITLAB",
+            "TOKEN_FILTRO", "CRONOGRAMA"]
     df_report_gerencial.to_csv("c:/vivo/report/" + name_file, columns=cols)
     export_csv_revisados(data_metrics, connection)
     export_csv_integracoes_apis(data_metrics, connection)
